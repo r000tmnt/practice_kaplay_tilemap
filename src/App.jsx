@@ -1,9 +1,13 @@
-import { lazy, useEffect } from 'react'
+import { useEffect } from 'react'
 import './App.css'
+import initGame from './scene/game'
 
 // store
 import { useSelector, useDispatch } from 'react-redux';
 import { setScale, setUIoffset } from './store/setting';
+
+// Game init
+initGame()
 
 function App() {
   const gameWidth = useSelector(state => state.setting.width)
