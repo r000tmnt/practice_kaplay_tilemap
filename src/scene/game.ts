@@ -34,9 +34,6 @@ let player : GameObj = {} as GameObj
 
 // region Init Game
 export default function initGame(){
-    const gameWidth = store.getState().setting.width
-    const gameHeight = store.getState().setting.height
-
     // Scenes can accept argument from go()
 
     // Define layers
@@ -52,10 +49,10 @@ export default function initGame(){
         const mapData = await (await fetch('bg/test_map.json')).json()
         const map = add([pos(0, 0)])
 
-        setCamPos(map.pos)
-        setCamScale(5)
+        // setCamPos(map.pos)
+        // setCamScale(5)
 
-        map.add([sprite("map"), layer('bg')])
+        map.add([sprite("map"), pos(0, 0), layer('bg'), scale(5)])
 
         for(const layer of mapData.layers){
             if (layer.type === "tilelayer") continue;
@@ -78,8 +75,9 @@ export default function initGame(){
                             sprite("player", { frame: 2 }), // idle frame of the player sprite
                             area(),
                             pos(object.x, object.y),
+                            scale(5),
                             {
-                                speed: 75,
+                                speed: 300,
                                 step: 0
                             }
                         ]);
@@ -99,6 +97,9 @@ export default function initGame(){
 // endregion
 
 const setControl = () => {
+    const gameWidth = store.getState().setting.width
+    const gameHeight = store.getState().setting.height
+
     player.onUpdate(() => {
         if(!isKeyDown()){
             player.stop()
@@ -106,31 +107,43 @@ const setControl = () => {
 
         // 
         if (isKeyDown("left")){
-            player.move(-player.speed, 0)
             if(player.curAnim() === undefined){
                 player.play("left")
             }
+            
+            const pos = checkPosition()
+            if(pos.x > 0) player.move(-player.speed, 0)
+            
             checkStep()
         }
         if (isKeyDown("right")){
-            player.move(player.speed, 0)
             if(player.curAnim() === undefined){
                 player.play("right")
             }
+
+            const pos = checkPosition()
+            if((pos.x + player.width) < gameWidth) player.move(player.speed, 0)
+
             checkStep()
         }
         if (isKeyDown("up")){
-            player.move(0, -player.speed)
             if(player.curAnim() === undefined){
                 player.play("up")
             }
+
+            const pos = checkPosition()
+            if((pos.y - player.height) > 0) player.move(0, -player.speed)
+
             checkStep()
         }
         if (isKeyDown("down")){
-            player.move(0, player.speed)
             if(player.curAnim() === undefined){
                 player.play("down")
             }
+
+            const pos = checkPosition()
+            if((pos.y + player.height) < gameHeight) player.move(0, player.speed)
+
             checkStep()
         }
 
@@ -142,7 +155,15 @@ const setControl = () => {
     })
 }
 
+const checkPosition = () => {
+    const worldPos = player.worldPos()
+    console.log('worldPos', worldPos)
+    return worldPos
+}
+
+
 const checkStep = () => {
+    // setCamPos(player.pos)
     player.step += 1
 
     const limit = 10
