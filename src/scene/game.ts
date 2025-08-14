@@ -29,6 +29,7 @@ const {
     getCamScale,
     onUpdate,
     isKeyDown,
+    isKeyPressed,
     tween,
     loop,
     vec2,
@@ -55,6 +56,8 @@ export default function initGame(){
         loadSprite('map', 'bg/test_map.png')
 
         loadSprite('arrow', 'ui/arrow.png')
+
+        loadFont('bebasNeue_regular', 'font/BebasNeue-Regular.ttf', { outline: 4 })
 
         const mapData = await (await fetch('bg/test_map.json')).json()
         const map = add([pos(0, 0)])
@@ -136,6 +139,13 @@ export default function initGame(){
 
 const setControl = (mapWidth: number, mapHeight: number) => {
     player.onUpdate(() => {
+        const menuOpen = store.getState().game.menuOpen
+
+        if(menuOpen > 0){
+            player.stop()
+            return
+        }
+
         if(!isKeyDown()){
             player.stop()
         }
@@ -172,12 +182,6 @@ const setControl = (mapWidth: number, mapHeight: number) => {
 
             checkStep()
         }
-
-        if (isKeyDown('escape')){
-            store.dispatch(
-                setMenu(1)
-            )
-        }
     })
 
     player.onCollide("exit", (any) => {
@@ -192,6 +196,16 @@ const setControl = (mapWidth: number, mapHeight: number) => {
     // player.onCollideEnd("pit", (any) => {
     //     console.log('onCollideEnd', any)
     // })
+
+    onUpdate(() => {
+        if (isKeyPressed('escape')){
+            console.log('escape key pressed')
+            const menuOpen = store.getState().game.menuOpen
+            store.dispatch(
+                setMenu(menuOpen? 0 : 1)
+            )
+        }
+    })
 }
 
 const checkPosition = () => {
@@ -223,7 +237,7 @@ const checkStep = () => {
         if(rng <= rate){
             console.log('Battle encounter!')
         }
-        
+
         player.step = 0
     }
 }
