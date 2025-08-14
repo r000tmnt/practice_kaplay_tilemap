@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { lazy, useEffect } from 'react'
 import './App.css'
 import initGame from './scene/game'
 
@@ -6,12 +6,16 @@ import initGame from './scene/game'
 import { useSelector, useDispatch } from 'react-redux';
 import { setScale, setUIoffset } from './store/setting';
 
+// Components
+const Menu = lazy(() => import('./components/menu'))
+
 // Game init
 initGame()
 
 function App() {
   const gameWidth = useSelector(state => state.setting.width)
   const gameHeight = useSelector(state => state.setting.height)
+  const uiOffsetV = useSelector(state => state.setting.uiOffsetV)
   const dispatch = useDispatch()
 
   // #region Scale UI
@@ -54,9 +58,9 @@ function App() {
 
 
   return (
-    <>
-
-    </>
+    <div className='ui' style={{left: `${uiOffsetV}px`}}>
+      <Menu />
+    </div>
   )
 }
 
