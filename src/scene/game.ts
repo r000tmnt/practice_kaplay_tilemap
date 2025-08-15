@@ -23,7 +23,7 @@ const {
     loadShaderURL,
     body,
     opacity,
-    go, 
+    go,
     setLayers,
     getLayers,
     layer,
@@ -68,7 +68,7 @@ export default function initGame(){
     const layers = getLayers()
     if(!layers) setLayers(['bg', 'game', "fg"], "game")
 
-    scene('game', async() => {
+    scene('game', async(map = null) => {
         // Reference: https://jslegenddev.substack.com/p/how-to-use-tiled-with-kaboomjs
         loadSpriteAtlas('character/swordsman_spritesheet.png', 'character/swordsman_spritesheet.json')
 
@@ -78,7 +78,7 @@ export default function initGame(){
 
         loadShaderURL("fadeTransition", null, 'shaders/fade_transition.frag')
 
-        setMap('test_map')
+        setMap(map?? 'test_map')
     })
     
     go('game')
@@ -95,7 +95,7 @@ const setMap = async(name: string) => {
 
     const { width, height, tilewidth } = mapData
 
-    setCamPos(map.pos.x + ((tilewidth * width) / 2), map.pos.y + ((tilewidth * height) / 2))
+    setCamPos(map.pos.x + ((tilewidth * 9) / 2), map.pos.y + ((tilewidth * 16) / 2))
     setCamScale(5)
 
     map.add([sprite(name), pos(0, 0), layer('bg')])
@@ -156,32 +156,52 @@ const setMap = async(name: string) => {
         
         if (layer.name === "positions") {
             for (const object of layer.objects) {
-                if (object.name === "player") {
-                    player = map.add([
-                        sprite("player", { frame: 2 }), // idle frame of the player sprite
-                        area(),
-                        body(),
-                        pos(object.x, object.y),
-                        {
-                            speed: 75,
-                            step: 0
-                        },
-                        // tags
-                        "player"
-                    ]);
-                    console.log('player', player)
-                    setControl(width * tilewidth, height * tilewidth)
+                if (object.name === "player" && !exitTouched) {
+                    createPlayerSprite(object.x, object.y, width * tilewidth, height * tilewidth)
                     continue;
                 }
             }
-        }            
+        }       
     }
+
+    if(exitTouched > 0){
+        const exit = map.children.find(child => child.direction && Number(child.direction) === exitTouched)
+        if(exit)
+            switch(true){
+                case exitTouched >= 8: // top
+                    createPlayerSprite(exit.pos.x, exit.pos.y + 5, width * tilewidth, height * tilewidth)
+                break;
+                case exitTouched >= 6: // right
+                    createPlayerSprite(exit.pos.x - 5, exit.pos.y, width * tilewidth, height * tilewidth)
+                break;
+                case exitTouched >= 2: // down
+                    createPlayerSprite(exit.pos.x, exit.pos.y - 5, width * tilewidth, height * tilewidth)
+                break;
+                case exitTouched >= 4: // left
+                    createPlayerSprite(exit.pos.x + 5, exit.pos.y, width * tilewidth, height * tilewidth)
+                break;   
+            }
+    }    
 
     console.log(map)    
 }
 
-// #region Player control
-const setControl = (mapWidth: number, mapHeight: number) => {
+const createPlayerSprite = (x: number, y: number, mapWidth: number, mapHeight: number) => {
+    player = map.add([
+        sprite("player", { frame: 2 }), // idle frame of the player sprite
+        area(),
+        body(),
+        pos(x, y),
+        {
+            speed: 75,
+            step: 0
+        },
+        // tags
+        "player"
+    ]);
+    console.log('player', player)
+
+    // #region Player control
     player.onUpdate(() => {
         if(!ready) return
 
@@ -257,82 +277,84 @@ const setControl = (mapWidth: number, mapHeight: number) => {
 
     // #region Player exit
     player.onCollide("exit", (exit: GameObj) => {
-        console.log('onCollide', exit)
-        console.log('player leaveing the map')
+        if(!exitTouched){
+            exitTouched = 1
+            console.log('onCollide', exit)
+            console.log('player leaving the map')
 
-        // Stop everything
-        ready = false
+            // Stop everything
+            ready = false
 
-        // const gameWidth = store.getState().setting.width
-        // const gameHeight = store.getState().setting.height
+            // const gameWidth = store.getState().setting.width
+            // const gameHeight = store.getState().setting.height
 
-        // Go to the pointed position
-        if(exit.linked > 0){
-            exitTouched = exit.linked 
-        }else{
-            // Go to the relative position
-            switch(true){
-                case exit.direction >= 8: // top
-                    exitTouched = exit.direction - 6
-                break;
-                case exit.direction >= 6: // right
-                    exitTouched = exit.direction - 2
-                break;
-                case exit.direction >= 2: // down
-                    exitTouched = exit.direction + 6
-                break;
-                case exit.direction >= 4: // left
-                    exitTouched = exit.direction + 2
-                break;                                        
-            }               
+            // Go to the pointed position
+            if(exit.linked > 0){
+                exitTouched = exit.linked 
+            }else{
+                // Go to the relative position
+                switch(true){
+                    case exit.direction >= 8: // top
+                        exitTouched = exit.direction - 6
+                    break;
+                    case exit.direction >= 6: // right
+                        exitTouched = exit.direction - 2
+                    break;
+                    case exit.direction >= 2: // down
+                        exitTouched = exit.direction + 6
+                    break;
+                    case exit.direction >= 4: // left
+                        exitTouched = exit.direction + 2
+                    break;                                        
+                }               
+            }
+
+            // TODO - Map transition
+            // Reference: https://play.kaplayjs.com/?example=postEffect
+            let progress = 0
+            tween(
+                progress,
+                1,
+                0.3,
+                (v) => { 
+                    usePostEffect("fadeTransition", () => ({ "u_progress": v }))
+                },
+                easings.easeInOutQuad
+            ).onEnd(() => {
+                // TODO - Destroy game objects when the screen black out
+                console.log("screen filled")
+                map.children.forEach(child => child.destroy())
+                map.destroy()
+                mapArrows.forEach(arrow => {
+                    arrow.timer.cancel()
+                })
+                mapArrows.splice(0)
+
+                // TODO - Load the next map
+                // setMap(exit.map)
+                go('game', exit.map)
+            })   
         }
+    })
+    // #endregion   
 
-        // TODO - Map transition
-        // Reference: https://play.kaplayjs.com/?example=postEffect
-        let progress = 0
+    // If map switched
+    if(exitTouched > 0){
+        // Reset value
+        exitTouched = 0
+
+        // TODO - Reveal the screen when everything is ready
         tween(
-            progress,
-            1,
+            exitTouched,
+            0,
             0.3,
             (v) => { 
                 usePostEffect("fadeTransition", () => ({ "u_progress": v }))
-             },
+            },
             easings.easeInOutQuad
-        ).onEnd(() => {
-            // TODO - Destroy game objects when the screen black out
-            console.log("screen filled")
-            map.destroy()
-            player.destroy()
-            mapArrows.forEach(arrow => {
-                arrow.timer.cancel()
-                arrow.sprite.destroy()
-            })
-            mapArrows.splice(0)
+        )        
+    }
 
-            // TODO - Load the next map
-            setMap(exit.map)
-
-            // Wait for ready state
-            const isReady = loop(0.1, () => {
-                if(ready){
-                    // TODO - Reveal the screen when everything is ready
-                    tween(
-                        progress,
-                        0,
-                        0.3,
-                        (v) => { 
-                            usePostEffect("fadeTransition", () => ({ "u_progress": v }))
-                        },
-                        easings.easeInOutQuad
-                    ).onEnd(() => {
-                        isReady.cancel()
-                    })                  
-                }
-            })
-        })        
-    })
-    // #endregion   
-    
     // Enable control
     ready = true
 }
