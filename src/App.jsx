@@ -58,9 +58,9 @@ function App() {
 
 
   return (
-    <div className='ui' style={{left: `${uiOffsetV}px`}}>
+    <>
       <Menu />
-    </div>
+    </>
   )
 }
 
