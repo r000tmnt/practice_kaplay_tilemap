@@ -4,7 +4,7 @@ import store from '../store/store'; // Assuming RootState is defined in your sto
 import {
   setMenu
 } from '../store/game';
-import { GameObj } from 'kaplay';
+import { GameObj, TweenController } from 'kaplay';
 
 const {
     add,
@@ -28,6 +28,7 @@ const {
     setCamScale,
     getCamScale,
     onUpdate,
+    onClick,
     isKeyDown,
     isKeyPressed,
     tween,
@@ -37,6 +38,7 @@ const {
 } = k
 
 let player : GameObj = {} as GameObj
+let mapArrows : TweenController[] = []
 
 // region Init Game
 export default function initGame(){
@@ -86,7 +88,9 @@ export default function initGame(){
             }    
 
             if (layer.name === 'exits'){
+                let index = -1
                 for (const object of layer.objects) {
+                    index += 1
                     map.add([
                         area({ shape: new k.Rect(k.vec2(0), object.width, object.height)   }),
                         body(),
@@ -104,7 +108,7 @@ export default function initGame(){
                         "arrow"
                     ])
 
-                    setMapArrow(arrow, true)
+                    setMapArrow(arrow, true, index)
                 }
                 continue;
             }
@@ -120,7 +124,9 @@ export default function initGame(){
                             {
                                 speed: 75,
                                 step: 0
-                            }
+                            },
+                            // tags
+                            "player"
                         ]);
                         console.log('player', player)
                         setControl(width * tilewidth, height * tilewidth)
@@ -189,6 +195,10 @@ const setControl = (mapWidth: number, mapHeight: number) => {
         console.log('player leaveing the map')
     })
 
+    // onClick('player', (sprite) => {
+    //     console.log('player', sprite)
+    // })
+
     // player.onCollideUpdate("pit", (any) => {
     //     console.log('onCollideUpdate', any)
     // })
@@ -204,6 +214,11 @@ const setControl = (mapWidth: number, mapHeight: number) => {
             store.dispatch(
                 setMenu(menuOpen? 0 : 1)
             )
+
+            // Pause moving objects
+            mapArrows.forEach(arrow => {
+                arrow.paused = menuOpen > 0? false : true
+            })
         }
     })
 }
@@ -214,14 +229,18 @@ const checkPosition = () => {
     return worldPos
 }
 
-const setMapArrow = (arrow: GameObj, floating: boolean) => {
-    tween(
+const setMapArrow = (arrow: GameObj, floating: boolean, index: number) => {
+    const controller = tween(
         arrow.pos,
         vec2(arrow.pos.x, floating? arrow.pos.y + 5 : arrow.pos.y - 5),
         0.5,
         (p) => arrow.pos = p,
         easings.easeInOutBounce
-    ).onEnd(() => { setMapArrow(arrow, !floating) })
+    )
+    
+    controller.onEnd(() => { setMapArrow(arrow, !floating, index) })
+
+    mapArrows[index] = controller
 }
 
 const checkStep = () => {
