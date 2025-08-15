@@ -12,8 +12,11 @@ const {
     sprite,
     scale,    
     rotate,
+    //shader,
+    usePostEffect,
     anchor,
     area,
+    color,
     scene, 
     loadSprite, 
     loadSpriteAtlas,
@@ -38,6 +41,7 @@ const {
     loop,
     vec2,
     easings,
+    uvquad
 } = k
 
 let player : GameObj = {} as GameObj
@@ -64,9 +68,6 @@ export default function initGame(){
     if(!layers) setLayers(['bg', 'game', "fg"], "game")
 
     scene('game', async() => {
-        const gameWidth = store.getState().setting.width
-        const gameHeight = store.getState().setting.height
-
         // Reference: https://jslegenddev.substack.com/p/how-to-use-tiled-with-kaboomjs
         loadSpriteAtlas('character/swordsman_spritesheet.png', 'character/swordsman_spritesheet.json')
 
@@ -137,9 +138,14 @@ const setMap = async(name: string) => {
                     sprite('arrow'),
                     opacity(1),
                     anchor('center'),
+                    rotate(),
                     pos(object.x + (tilewidth /2) - 1, object.y - 10),
                     // tags
-                    "arrow"
+                    "arrow",
+                    // Get direction from name
+                    {
+                        direction: Number(object.name)
+                    }                    
                 ])
 
                 setMapArrow(arrow, true, index)
@@ -190,7 +196,7 @@ const setControl = (mapWidth: number, mapHeight: number) => {
         if (isKeyDown("left")){
             if(player.curAnim() !== "left") player.play("left")
 
-            const pos = checkPosition()
+            const pos = player.worldPos()
             if(pos.x > 0 ) player.move(-player.speed, 0)
             
             checkStep()
@@ -198,7 +204,7 @@ const setControl = (mapWidth: number, mapHeight: number) => {
         if (isKeyDown("right")){
             if(player.curAnim() !== "right") player.play("right")
 
-            const pos = checkPosition()
+            const pos = player.worldPos()
             if((pos.x + player.width) < mapWidth ) player.move(player.speed, 0)
 
             checkStep()
@@ -206,7 +212,7 @@ const setControl = (mapWidth: number, mapHeight: number) => {
         if (isKeyDown("up")){
             if(player.curAnim() !== "up") player.play("up")
 
-            const pos = checkPosition()
+            const pos = player.worldPos()
             if(pos.y > 0 ) player.move(0, -player.speed)
 
             checkStep()
@@ -214,7 +220,7 @@ const setControl = (mapWidth: number, mapHeight: number) => {
         if (isKeyDown("down")){
             if(player.curAnim() !== "down") player.play("down")
 
-            const pos = checkPosition()
+            const pos = player.worldPos()
             if((pos.y + player.height) < mapHeight ) player.move(0, player.speed)
 
             checkStep()
@@ -253,6 +259,9 @@ const setControl = (mapWidth: number, mapHeight: number) => {
         console.log('onCollide', exit)
         console.log('player leaveing the map')
 
+        const gameWidth = store.getState().setting.width
+        const gameHeight = store.getState().setting.height
+
         // Go to the pointed position
         if(exit.linked > 0){
             exitTouched = exit.linked 
@@ -275,23 +284,67 @@ const setControl = (mapWidth: number, mapHeight: number) => {
         }
 
         // TODO - Map transition
+        // Reference: https://play.kaplayjs.com/?example=postEffect
+        let progress = 0
+        const fadeOut = tween(
+            progress,
+            1,
+            0.3,
+            (v) => { 
+                usePostEffect("fadeTransition", () => ({ "u_progress": v }))
+             },
+            easings.easeInOutQuad
+        )   
+
         // TODO - Destroy game objects when the screen black out
+        fadeOut.onEnd(() => {
+            console.log("screen filled")
+        })        
+
         // TODO - Reveal the screen when everything is ready
     })
     // #endregion    
 }
 // #endregion
 
-const checkPosition = () => {
-    const worldPos = player.worldPos()
-    // console.log('worldPos', worldPos)
-    return worldPos
-}
 
 const setMapArrow = (arrow: GameObj, floating: boolean, index: number) => {
+    // Check direction
+    switch(true){
+        case arrow.direction >= 8: // top
+            arrow.angle = 180
+        break;
+        case arrow.direction >= 6: // right
+            arrow.angle = 270
+        break;
+        case arrow.direction >= 4: // left
+            arrow.angle = 90
+        break;
+    }
+
+    const gap = 5
+
     const controller = tween(
         arrow.pos,
-        vec2(arrow.pos.x, floating? arrow.pos.y + 5 : arrow.pos.y - 5),
+        (arrow.direction === 8)? // top
+        vec2(
+            arrow.pos.x, 
+            (floating)? arrow.pos.y - gap : arrow.pos.y + gap
+        ) :        
+        (arrow.direction === 6)? // right
+        vec2(
+            (floating)? arrow.pos.x + gap : arrow.pos.x - gap, 
+            arrow.pos.y
+        ) :
+        (arrow.direction === 4)? // left
+        vec2(
+            (floating)? arrow.pos.x - gap : arrow.pos.x + gap, 
+            arrow.pos.y
+        ) :
+        vec2( // down
+            arrow.pos.x, 
+            (floating)? arrow.pos.y + gap : arrow.pos.y - gap
+        ),
         0.5,
         (p) => arrow.pos = p,
         easings.easeInOutBounce
