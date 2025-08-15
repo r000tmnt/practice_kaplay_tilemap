@@ -5,6 +5,7 @@ import {
   setMenu
 } from '../store/game';
 import { GameObj, TweenController } from 'kaplay';
+import Big from 'big.js';
 
 const {
     add,
@@ -53,6 +54,7 @@ let mapArrows : { timer: TweenController, sprite: GameObj }[] = []
  * @value 6 - right
  * @value 2 - down
  * @value 4 - left
+ * @value 1 - exiting
  * @value 0 - null
  * @PS Floating number means the direction with multiple exits 
  */
@@ -128,7 +130,7 @@ const setMap = async(name: string) => {
                     "exit",
                     // Get direction from name
                     {
-                        direction: Number(object.name),
+                        direction: new Big(Number(object.name)),
                         linked: object.properties.find(param => param.name === 'linked').value,
                         map: object.properties.find(param => param.name === 'map').value
                     }
@@ -140,7 +142,18 @@ const setMap = async(name: string) => {
                     opacity(1),
                     anchor('center'),
                     rotate(),
-                    pos(object.x + (tilewidth /2) - 1, object.y - 10),
+                    pos(
+                        Number(object.name) >= 6?
+                        object.x - 10 : // left
+                        Number(object.name) >= 4?
+                        object.x + 10 : // right
+                        object.x + (tilewidth /2) - 1, // center
+                        Number(object.name) >= 8? 
+                        object.y + 10 : // top
+                        Number(object.name) >= 2?
+                        object.y - 10 : // down
+                        object.y + (tilewidth /2) - 1 // center
+                    ),
                     // tags
                     "arrow",
                     // Get direction from name
@@ -165,17 +178,17 @@ const setMap = async(name: string) => {
     }
 
     if(exitTouched > 0){
-        const exit = map.children.find(child => child.direction && Number(child.direction) === exitTouched)
+        const exit = map.children.find(child => child.direction && child.direction.eq(exitTouched))
         if(exit)
             switch(true){
                 case exitTouched >= 8: // top
                     createPlayerSprite(exit.pos.x, exit.pos.y + 5, width * tilewidth, height * tilewidth)
                 break;
                 case exitTouched >= 6: // right
-                    createPlayerSprite(exit.pos.x - 5, exit.pos.y, width * tilewidth, height * tilewidth)
+                    createPlayerSprite(exit.pos.x - (player.width + 5), exit.pos.y, width * tilewidth, height * tilewidth)
                 break;
                 case exitTouched >= 2: // down
-                    createPlayerSprite(exit.pos.x, exit.pos.y - 5, width * tilewidth, height * tilewidth)
+                    createPlayerSprite(exit.pos.x, exit.pos.y - (player.height + 5), width * tilewidth, height * tilewidth)
                 break;
                 case exitTouched >= 4: // left
                     createPlayerSprite(exit.pos.x + 5, exit.pos.y, width * tilewidth, height * tilewidth)
@@ -295,16 +308,16 @@ const createPlayerSprite = (x: number, y: number, mapWidth: number, mapHeight: n
                 // Go to the relative position
                 switch(true){
                     case exit.direction >= 8: // top
-                        exitTouched = exit.direction - 6
+                        exitTouched = exit.direction.minus(6)
                     break;
                     case exit.direction >= 6: // right
-                        exitTouched = exit.direction - 2
+                        exitTouched = exit.direction.minus(2)
                     break;
                     case exit.direction >= 2: // down
-                        exitTouched = exit.direction + 6
+                        exitTouched = exit.direction.plus(6)
                     break;
                     case exit.direction >= 4: // left
-                        exitTouched = exit.direction + 2
+                        exitTouched = exit.direction.plus(2)
                     break;                                        
                 }               
             }
@@ -379,17 +392,17 @@ const setMapArrow = (arrow: GameObj, floating: boolean, index: number) => {
 
     const controller = tween(
         arrow.pos,
-        (arrow.direction === 8)? // top
+        (arrow.direction >= 8)? // top
         vec2(
             arrow.pos.x, 
             (floating)? arrow.pos.y - gap : arrow.pos.y + gap
         ) :        
-        (arrow.direction === 6)? // right
+        (arrow.direction >= 6)? // right
         vec2(
             (floating)? arrow.pos.x + gap : arrow.pos.x - gap, 
             arrow.pos.y
         ) :
-        (arrow.direction === 4)? // left
+        (arrow.direction >= 4)? // left
         vec2(
             (floating)? arrow.pos.x - gap : arrow.pos.x + gap, 
             arrow.pos.y
