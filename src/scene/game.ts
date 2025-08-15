@@ -44,8 +44,9 @@ const {
     uvquad
 } = k
 
+let map : GameObj = {} as GameObj
 let player : GameObj = {} as GameObj
-let mapArrows : TweenController[] = []
+let mapArrows : { timer: TweenController, sprite: GameObj }[] = []
 /**
  * If player leaves the map and direction. Mark with num pad notation.
  * @value 8 - top
@@ -90,7 +91,7 @@ const setMap = async(name: string) => {
     }
 
     const mapData = await (await fetch(`bg/${name}.json`)).json()
-    const map = add([pos(0, 0)])
+    map = add([pos(0, 0)])
 
     const { width, height, tilewidth } = mapData
 
@@ -182,12 +183,11 @@ const setMap = async(name: string) => {
 // #region Player control
 const setControl = (mapWidth: number, mapHeight: number) => {
     player.onUpdate(() => {
+        if(!ready) return
+
         const menuOpen = store.getState().game.menuOpen
 
-        if(menuOpen > 0){
-            player.stop()
-            return
-        }
+        if(menuOpen > 0) return
 
         if(!isKeyDown()){
             player.stop()
@@ -241,6 +241,7 @@ const setControl = (mapWidth: number, mapHeight: number) => {
 
     onUpdate(() => {
         if (isKeyPressed('escape')){
+            if(!ready) return
             console.log('escape key pressed')
             const menuOpen = store.getState().game.menuOpen
             store.dispatch(
@@ -249,7 +250,7 @@ const setControl = (mapWidth: number, mapHeight: number) => {
 
             // Pause moving objects
             mapArrows.forEach(arrow => {
-                arrow.paused = menuOpen > 0? false : true
+                arrow.timer.paused = menuOpen > 0? false : true
             })
         }
     })
@@ -259,8 +260,11 @@ const setControl = (mapWidth: number, mapHeight: number) => {
         console.log('onCollide', exit)
         console.log('player leaveing the map')
 
-        const gameWidth = store.getState().setting.width
-        const gameHeight = store.getState().setting.height
+        // Stop everything
+        ready = false
+
+        // const gameWidth = store.getState().setting.width
+        // const gameHeight = store.getState().setting.height
 
         // Go to the pointed position
         if(exit.linked > 0){
@@ -286,7 +290,7 @@ const setControl = (mapWidth: number, mapHeight: number) => {
         // TODO - Map transition
         // Reference: https://play.kaplayjs.com/?example=postEffect
         let progress = 0
-        const fadeOut = tween(
+        tween(
             progress,
             1,
             0.3,
@@ -294,16 +298,43 @@ const setControl = (mapWidth: number, mapHeight: number) => {
                 usePostEffect("fadeTransition", () => ({ "u_progress": v }))
              },
             easings.easeInOutQuad
-        )   
-
-        // TODO - Destroy game objects when the screen black out
-        fadeOut.onEnd(() => {
+        ).onEnd(() => {
+            // TODO - Destroy game objects when the screen black out
             console.log("screen filled")
-        })        
+            map.destroy()
+            player.destroy()
+            mapArrows.forEach(arrow => {
+                arrow.timer.cancel()
+                arrow.sprite.destroy()
+            })
+            mapArrows.splice(0)
 
-        // TODO - Reveal the screen when everything is ready
+            // TODO - Load the next map
+            setMap(exit.map)
+
+            // Wait for ready state
+            const isReady = loop(0.1, () => {
+                if(ready){
+                    // TODO - Reveal the screen when everything is ready
+                    tween(
+                        progress,
+                        0,
+                        0.3,
+                        (v) => { 
+                            usePostEffect("fadeTransition", () => ({ "u_progress": v }))
+                        },
+                        easings.easeInOutQuad
+                    ).onEnd(() => {
+                        isReady.cancel()
+                    })                  
+                }
+            })
+        })        
     })
-    // #endregion    
+    // #endregion   
+    
+    // Enable control
+    ready = true
 }
 // #endregion
 
@@ -352,7 +383,7 @@ const setMapArrow = (arrow: GameObj, floating: boolean, index: number) => {
     
     controller.onEnd(() => { setMapArrow(arrow, !floating, index) })
 
-    mapArrows[index] = controller
+    mapArrows[index] = { timer: controller, sprite: arrow }
 }
 
 const checkStep = () => {
