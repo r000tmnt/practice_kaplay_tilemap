@@ -13,7 +13,7 @@ const {
     sprite,
     scale,    
     rotate,
-    //shader,
+    get,
     usePostEffect,
     anchor,
     area,
@@ -180,7 +180,7 @@ const setMap = async(name: string) => {
 
         if(layer.name === 'items'){
             for (const object of layer.objects) {
-                createItemSprite(object.name, object.x, object.y, mapWidth, mapHeight, object.properties)
+                createItemSprite(object.name, object.x, object.y, object.width, object.height, object.properties)
             }            
         }
         
@@ -312,30 +312,44 @@ const createPlayerSprite = (x: number, y: number, mapWidth: number, mapHeight: n
 
             let object : GameObj | undefined = undefined
 
+            const items = map.get('item')
+
             switch(true){
-                case player.frame <= 5: // down
+                case player.frame <= 5: {// down
                     // Check the block in front of player
-                    object = map.children.find(child => {
-                        return child.pos.x === player.pos.x && child.pos.y === (player.pos.y + player.height)
-                    })
+                    const range = { x: player.pos.x + map.tileWidth, y: player.pos.y + player.height }
+                    object = items.find(item => {
+                        return Math.abs(range.x - item.pos.x) < (map.tileWidth * 1/3) &&
+                               item.pos.y === player.pos.y
+                    })                    
+                }
                 break;  
-                case player.frame <= 11: // left
+                case player.frame <= 11: {// left
                     // Check the block in front of player
-                    object = map.children.find(child => {
-                        return child.pos.x === (player.pos.x - player.width) && child.pos.y === player.pos.y
-                    })                
+                    const range = { x: player.pos.x - map.tileWidth, y: player.ps.y + player.height}
+                    object = items.find(items => {
+                        return items.pos.x === range.x && 
+                               Math.abs(range.y - items.pos.y) < (map.tileWidth * 1/3 )
+                    })                                    
+                }
                 break;
-                case player.frame <= 17: // right
+                case player.frame <= 17: {// right
                     // Check the block in front of player
-                    object = map.children.find(child => {
-                        return child.pos.x === (player.pos.x + player.width) && child.pos.y === player.pos.y
-                    })                     
+                    const range = { x: player.pos.x + player.width, y: player.ps.y + player.height}
+                    object = items.find(items => {
+                        return items.pos.x === range.x && 
+                               Math.abs(range.y - items.pos.y) < (map.tileWidth * 1/3 )
+                    })                         
+                }                
                 break;
-                case player.frame <= 23: // up
+                case player.frame <= 23: {// up
                     // Check the block in front of player
-                    object = map.children.find(child => {
-                        return child.pos.x === player.pos.x && child.pos.y === (player.pos.y - player.height)
+                    const range = { x: player.pos.x + map.tileWidth, y: player.pos.y - map.tileWidth }
+                    object = items.find(items => {
+                        return Math.abs(range.x - items.pos.x) < (map.tileWidth * 1/3 ) &&
+                               items.pos.y === player.pos.y
                     })                     
+                }
                 break;
             }
 
@@ -516,7 +530,7 @@ const InteractWithObject = (object: GameObj) => {
     }
 }
 
-const createItemSprite = (name: string, x: number, y: number, mapWidth: number, mapHeight: number, customProperty: any) => {
+const createItemSprite = (name: string, x: number, y: number, objWidth: number, objHeight: number, customProperty: any) => {
     switch(name){
         case 'chest':
             if(!getAsset(name)){
@@ -532,10 +546,11 @@ const createItemSprite = (name: string, x: number, y: number, mapWidth: number, 
                 sprite(name, {
                     frame: 0
                 }),
+                area({ shape: new k.Rect(k.vec2(0), objWidth, objHeight)   }),
                 pos(x, y),
                 body({ isStatic: true }),
                 // tags
-                "chest",
+                "item",
             ])
 
             // custom properties
