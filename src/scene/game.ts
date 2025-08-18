@@ -103,7 +103,16 @@ const setMap = async(name: string) => {
     setCamPos(map.pos.x + ((tilewidth * 9) / 2), map.pos.y + ((tilewidth * 16) / 2))
     setCamScale(5)
 
-    map.add([sprite(name), pos(0, 0), layer('bg')])
+    map.add([
+        sprite(name), 
+        pos(0, 0), 
+        layer('bg'),
+        // custom property
+        {
+            tilewidth,
+            aspectRatio: [9, 16]
+        }
+    ])
 
     for(const layer of mapData.layers){
         if (layer.type === "tilelayer") continue;
@@ -334,6 +343,74 @@ const createPlayerSprite = (x: number, y: number, mapWidth: number, mapHeight: n
             // Interact with the object            
             if(object) InteractWithObject(object)   
         }
+
+        // #region Camera position
+        // Decide to move the camera or not
+        const { x, y } = player.pos
+        const { tileWidth, aspectRatio } = map
+        const middleX = (tileWidth * aspectRatio[0]) / 2 
+        const middleY = (tileWidth * aspectRatio[1]) / 2 
+
+        const wPos = player.worldPos()
+        let inX = false, inY = false;
+
+        // Player pos relative to the game world
+        if((wPos.x + middleX) <= mapWidth && (wPos.x - middleX) >= 0){ 
+            inX = true
+        }else 
+        if((wPos.y - middleY) >= 0 && (wPos.y + middleY) <= mapHeight){ 
+            inY = true
+        }
+        
+        // Camera follows player
+        if(inX && inY) setCamPos(player.pos)
+            
+        if(inX && !inY){
+            // Reached top?
+            if(!((wPos.y - middleY) <= 0)){
+                setCamPos(wPos.x, middleY)
+            }
+
+            // Reached down?
+            if(!((wPos.y + middleY) >= mapHeight)){
+                setCamPos(wPos.x, mapHeight - middleY)
+            }
+        }
+
+        if(!inX && inY){
+            // Reached right?
+            if(!((wPos.x + middleX) >= mapWidth)){
+                setCamPos(mapWidth - middleX, wPos.y)
+            }
+
+            // Reached left?
+            if(!((wPos.x - middleX) <= 0)){
+                setCamPos(middleX, wPos.y)
+            }
+        }
+
+        if(!inX && !inY){
+            // Reached top and right?
+            if(!((wPos.y - middleY) <= 0) && !((wPos.x + middleX) >= mapWidth)){
+                setCamPos(mapWidth - middleX, middleY)
+            }
+
+            // Reached down and right?
+            if(!((wPos.y + middleY) >= mapHeight) && !((wPos.x + middleX) >= mapWidth)){
+                setCamPos(mapWidth - middleX, mapHeight - middleY)
+            }
+
+            // Reached down and left?
+            if(!((wPos.y + middleY) >= mapHeight) && !((wPos.x - middleX) <= 0)){
+                setCamPos(middleX, mapHeight - middleY)
+            }
+            
+            // Reached top and left?
+            if(!((wPos.y - middleY) <= 0) && !((wPos.x - middleX) <= 0)){
+                setCamPos(middleX, middleY)
+            }
+        }
+        // #endregion
     })
 
     // #region Player exit
