@@ -214,9 +214,37 @@
          "visible":true,
          "x":0,
          "y":0
+        }, 
+        {
+         "draworder":"topdown",
+         "id":6,
+         "name":"items",
+         "objects":[
+                {
+                 "height":16,
+                 "id":14,
+                 "name":"chest",
+                 "properties":[
+                        {
+                         "name":"Gold",
+                         "type":"int",
+                         "value":100
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":false,
+                 "width":16,
+                 "x":80,
+                 "y":320
+                }],
+         "opacity":1,
+         "type":"objectgroup",
+         "visible":true,
+         "x":0,
+         "y":0
         }],
- "nextlayerid":6,
- "nextobjectid":14,
+ "nextlayerid":7,
+ "nextobjectid":15,
  "orientation":"orthogonal",
  "renderorder":"right-down",
  "tiledversion":"1.11.2",
