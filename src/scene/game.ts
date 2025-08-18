@@ -107,12 +107,11 @@ const setMap = async(name: string) => {
         sprite(name), 
         pos(0, 0), 
         layer('bg'),
-        // custom property
-        {
-            tilewidth,
-            aspectRatio: [9, 16]
-        }
     ])
+
+    // custom property
+    map.tileWidth = tilewidth
+    map.aspectRatio = [9, 16]
 
     for(const layer of mapData.layers){
         if (layer.type === "tilelayer") continue;
@@ -346,7 +345,7 @@ const createPlayerSprite = (x: number, y: number, mapWidth: number, mapHeight: n
 
         // #region Camera position
         // Decide to move the camera or not
-        const { x, y } = player.pos
+        // const { x, y } = player.pos
         const { tileWidth, aspectRatio } = map
         const middleX = (tileWidth * aspectRatio[0]) / 2 
         const middleY = (tileWidth * aspectRatio[1]) / 2 
@@ -367,46 +366,46 @@ const createPlayerSprite = (x: number, y: number, mapWidth: number, mapHeight: n
             
         if(inX && !inY){
             // Reached top?
-            if(!((wPos.y - middleY) <= 0)){
+            if((wPos.y - middleY) <= 0){
                 setCamPos(wPos.x, middleY)
             }
 
             // Reached down?
-            if(!((wPos.y + middleY) >= mapHeight)){
+            if((wPos.y + middleY) >= mapHeight){
                 setCamPos(wPos.x, mapHeight - middleY)
             }
         }
 
         if(!inX && inY){
             // Reached right?
-            if(!((wPos.x + middleX) >= mapWidth)){
+            if((wPos.x + middleX) >= mapWidth){
                 setCamPos(mapWidth - middleX, wPos.y)
             }
 
             // Reached left?
-            if(!((wPos.x - middleX) <= 0)){
+            if((wPos.x - middleX) <= 0){
                 setCamPos(middleX, wPos.y)
             }
         }
 
         if(!inX && !inY){
             // Reached top and right?
-            if(!((wPos.y - middleY) <= 0) && !((wPos.x + middleX) >= mapWidth)){
+            if((wPos.y - middleY) <= 0 && (wPos.x + middleX) >= mapWidth){
                 setCamPos(mapWidth - middleX, middleY)
             }
 
             // Reached down and right?
-            if(!((wPos.y + middleY) >= mapHeight) && !((wPos.x + middleX) >= mapWidth)){
+            if((wPos.y + middleY) >= mapHeight && (wPos.x + middleX) >= mapWidth){
                 setCamPos(mapWidth - middleX, mapHeight - middleY)
             }
 
             // Reached down and left?
-            if(!((wPos.y + middleY) >= mapHeight) && !((wPos.x - middleX) <= 0)){
+            if((wPos.y + middleY) >= mapHeight && (wPos.x - middleX) <= 0){
                 setCamPos(middleX, mapHeight - middleY)
             }
             
             // Reached top and left?
-            if(!((wPos.y - middleY) <= 0) && !((wPos.x - middleX) <= 0)){
+            if((wPos.y - middleY) <= 0 && (wPos.x - middleX) <= 0){
                 setCamPos(middleX, middleY)
             }
         }
