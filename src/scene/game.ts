@@ -4,7 +4,7 @@ import store from '../store/store'; // Assuming RootState is defined in your sto
 import {
   setMenu
 } from '../store/game';
-import { GameObj, TweenController } from 'kaplay';
+import { Game, GameObj, TweenController } from 'kaplay';
 import Big from 'big.js';
 
 const {
@@ -97,6 +97,9 @@ const setMap = async(name: string) => {
 
     const { width, height, tilewidth } = mapData
 
+    const mapWidth = width * tilewidth
+    const mapHeight = height * tilewidth
+
     setCamPos(map.pos.x + ((tilewidth * 9) / 2), map.pos.y + ((tilewidth * 16) / 2))
     setCamScale(5)
 
@@ -166,11 +169,17 @@ const setMap = async(name: string) => {
             }
             continue;
         }
+
+        if(layer.name === 'items'){
+            for (const object of layer.objects) {
+                createItemSprite(object.name, object.x, object.y, mapWidth, mapHeight, object.properties)
+            }            
+        }
         
         if (layer.name === "positions") {
             for (const object of layer.objects) {
                 if (object.name === "player" && !exitTouched) {
-                    createPlayerSprite(object.x, object.y, width * tilewidth, height * tilewidth)
+                    createPlayerSprite(object.x, object.y, mapWidth, mapHeight)
                     continue;
                 }
             }
@@ -182,16 +191,16 @@ const setMap = async(name: string) => {
         if(exit)
             switch(true){
                 case exitTouched >= 8: // top
-                    createPlayerSprite(exit.pos.x, exit.pos.y + 5, width * tilewidth, height * tilewidth)
+                    createPlayerSprite(exit.pos.x, exit.pos.y + 5, mapWidth, mapHeight)
                 break;
                 case exitTouched >= 6: // right
-                    createPlayerSprite(exit.pos.x - (player.width + 5), exit.pos.y, width * tilewidth, height * tilewidth)
+                    createPlayerSprite(exit.pos.x - (player.width + 5), exit.pos.y, mapWidth, mapHeight)
                 break;
                 case exitTouched >= 2: // down
-                    createPlayerSprite(exit.pos.x, exit.pos.y - (player.height + 5), width * tilewidth, height * tilewidth)
+                    createPlayerSprite(exit.pos.x, exit.pos.y - (player.height + 5), mapWidth, mapHeight)
                 break;
                 case exitTouched >= 4: // left
-                    createPlayerSprite(exit.pos.x + 5, exit.pos.y, width * tilewidth, height * tilewidth)
+                    createPlayerSprite(exit.pos.x + 5, exit.pos.y, mapWidth, mapHeight)
                 break;   
             }
     }    
@@ -277,6 +286,8 @@ const createPlayerSprite = (x: number, y: number, mapWidth: number, mapHeight: n
             if(!ready) return
             console.log('escape key pressed')
             const menuOpen = store.getState().game.menuOpen
+
+            // TODO - Close inner menu
             store.dispatch(
                 setMenu(menuOpen? 0 : 1)
             )
@@ -285,6 +296,43 @@ const createPlayerSprite = (x: number, y: number, mapWidth: number, mapHeight: n
             mapArrows.forEach(arrow => {
                 arrow.timer.paused = menuOpen > 0? false : true
             })
+        }
+
+        if (isKeyPressed('enter')){
+            // Get player facing direction
+            console.log(player.frame)
+
+            let object : GameObj | undefined = undefined
+
+            switch(true){
+                case player.frame <= 5: // down
+                    // Check the block in front of player
+                    object = map.children.find(child => {
+                        return child.pos.x === player.pos.x && child.pos.y === (player.pos.y + player.height)
+                    })
+                break;  
+                case player.frame <= 11: // left
+                    // Check the block in front of player
+                    object = map.children.find(child => {
+                        return child.pos.x === (player.pos.x - player.width) && child.pos.y === player.pos.y
+                    })                
+                break;
+                case player.frame <= 17: // right
+                    // Check the block in front of player
+                    object = map.children.find(child => {
+                        return child.pos.x === (player.pos.x + player.width) && child.pos.y === player.pos.y
+                    })                     
+                break;
+                case player.frame <= 23: // up
+                    // Check the block in front of player
+                    object = map.children.find(child => {
+                        return child.pos.x === player.pos.x && child.pos.y === (player.pos.y - player.height)
+                    })                     
+                break;
+            }
+
+            // Interact with the object            
+            if(object) InteractWithObject(object)   
         }
     })
 
@@ -370,6 +418,58 @@ const createPlayerSprite = (x: number, y: number, mapWidth: number, mapHeight: n
 
     // Enable control
     ready = true
+}
+
+const InteractWithObject = (object: GameObj) => {
+    if(object.hasOwnProperty('name')){
+        switch(object.name){
+            case 'chest':
+                if(object.frame < 1){
+                    // Open chest
+                    object.play('open', {
+                        onEnd: () => {
+                            // TODO - Obtain items
+                            // TODO - Display text message
+                        }
+                    })
+                }else{
+                    // TODO - Display text message
+                }
+            break;
+        }
+    }
+}
+
+const createItemSprite = (name: string, x: number, y: number, mapWidth: number, mapHeight: number, customProperty: any) => {
+    switch(name){
+        case 'chest':
+            if(!getAsset(name)){
+                loadSprite(name, `item/${name}.png`, {
+                    sliceX: 2,
+                    anims: {
+                        open: { from: 0, to: 1, loop: false }
+                    }
+                })
+            }
+
+            const chest = map.add([
+                sprite(name, {
+                    frame: 0
+                }),
+                pos(x, y),
+                body({ isStatic: true }),
+                // tags
+                "chest",
+            ])
+
+            // custom properties
+            for(const property of customProperty){
+                chest[`${property.name}`] = property.value
+            }
+
+            console.log('chest', chest)
+        break;
+    }
 }
 // #endregion
 
