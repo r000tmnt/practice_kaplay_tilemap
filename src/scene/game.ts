@@ -48,6 +48,8 @@ const {
 let map : GameObj = {} as GameObj
 let player : GameObj = {} as GameObj
 let mapArrows : { timer: TweenController, sprite: GameObj }[] = []
+let collidedObjs: GameObj[] = []
+
 /**
  * If player leaves the map and direction. Mark with num pad notation.
  * @value 8 - top
@@ -231,6 +233,13 @@ const createPlayerSprite = (x: number, y: number, mapWidth: number, mapHeight: n
     ]);
     console.log('player', player)
 
+    // Add an invisible area for the player
+    player.add([
+        area({ shape: new k.Rect(k.vec2(0), map.tileWidth, map.tileWidth) }),
+        // Position relative to the player
+        pos(0, player.height),
+    ])
+
     // #region Player control
     player.onUpdate(() => {
         if(!ready) return
@@ -241,57 +250,63 @@ const createPlayerSprite = (x: number, y: number, mapWidth: number, mapHeight: n
 
         if(!isKeyDown()){
             player.stop()
+            // setCameraPosition(mapWidth, mapHeight)
         }
 
         if (isKeyDown("left")){
+            setCameraPosition(mapWidth, mapHeight)
             if(player.curAnim() !== "left") player.play("left")
 
             const pos = player.worldPos()
             if(pos.x > 0 ) player.move(-player.speed, 0)
-            
+            // Move the invisible area
+            player.children[0].pos.x = -map.tileWidth
+            player.children[0].pos.y = (player.height - map.tileWidth)
+                
             checkStep()
         }
         if (isKeyDown("right")){
+            setCameraPosition(mapWidth, mapHeight)
             if(player.curAnim() !== "right") player.play("right")
 
             const pos = player.worldPos()
             if((pos.x + player.width) < mapWidth ) player.move(player.speed, 0)
+            // Move the invisible area
+            player.children[0].pos.x = player.width
+            player.children[0].pos.y = (player.height - map.tileWidth)                
 
             checkStep()
         }
         if (isKeyDown("up")){
+            setCameraPosition(mapWidth, mapHeight)
             if(player.curAnim() !== "up") player.play("up")
 
             const pos = player.worldPos()
             if(pos.y > 0 ) player.move(0, -player.speed)
+            // Move the invisible area
+            player.children[0].pos.x = 0
+            player.children[0].pos.y = -map.tileWidth                
 
             checkStep()
         }
         if (isKeyDown("down")){
+            setCameraPosition(mapWidth, mapHeight)
             if(player.curAnim() !== "down") player.play("down")
 
             const pos = player.worldPos()
             if((pos.y + player.height) < mapHeight ) player.move(0, player.speed)
+            // Move the invisible area
+            player.children[0].pos.x = 0
+            player.children[0].pos.y = player.height              
 
             checkStep()
         }
     })
 
-    // onClick('player', (sprite) => {
-    //     console.log('player', sprite)
-    // })
-
-    // player.onCollideUpdate("pit", (any) => {
-    //     console.log('onCollideUpdate', any)
-    // })
-
-    // player.onCollideEnd("pit", (any) => {
-    //     console.log('onCollideEnd', any)
-    // })
-
     onUpdate(() => {
+        if(!ready) return
+
         if (isKeyPressed('escape')){
-            if(!ready) return
             console.log('escape key pressed')
             const menuOpen = store.getState().game.menuOpen
 
@@ -307,123 +322,16 @@ const createPlayerSprite = (x: number, y: number, mapWidth: number, mapHeight: n
         }
 
         if (isKeyPressed('enter')){
-            // Get player facing direction
-            console.log(player.frame)
+            for(const obj of collidedObjs){
+                const isOverlapping = player.children[0].isOverlapping(obj)
 
-            let object : GameObj | undefined = undefined
-
-            const items = map.get('item')
-
-            switch(true){
-                case player.frame <= 5: {// down
-                    // Check the block in front of player
-                    const range = { x: player.pos.x + map.tileWidth, y: player.pos.y + player.height }
-                    object = items.find(item => {
-                        return Math.abs(range.x - item.pos.x) < (map.tileWidth * 1/3) &&
-                               item.pos.y === player.pos.y
-                    })                    
+                if(isOverlapping && obj.tags.find(t => t === 'item')){
+                    // Interact with the object    
+                    InteractWithObject(obj) 
+                    return
                 }
-                break;  
-                case player.frame <= 11: {// left
-                    // Check the block in front of player
-                    const range = { x: player.pos.x - map.tileWidth, y: player.ps.y + player.height}
-                    object = items.find(items => {
-                        return items.pos.x === range.x && 
-                               Math.abs(range.y - items.pos.y) < (map.tileWidth * 1/3 )
-                    })                                    
-                }
-                break;
-                case player.frame <= 17: {// right
-                    // Check the block in front of player
-                    const range = { x: player.pos.x + player.width, y: player.ps.y + player.height}
-                    object = items.find(items => {
-                        return items.pos.x === range.x && 
-                               Math.abs(range.y - items.pos.y) < (map.tileWidth * 1/3 )
-                    })                         
-                }                
-                break;
-                case player.frame <= 23: {// up
-                    // Check the block in front of player
-                    const range = { x: player.pos.x + map.tileWidth, y: player.pos.y - map.tileWidth }
-                    object = items.find(items => {
-                        return Math.abs(range.x - items.pos.x) < (map.tileWidth * 1/3 ) &&
-                               items.pos.y === player.pos.y
-                    })                     
-                }
-                break;
-            }
-
-            // Interact with the object            
-            if(object) InteractWithObject(object)   
+            }  
         }
-
-        // #region Camera position
-        // Decide to move the camera or not
-        // const { x, y } = player.pos
-        const { tileWidth, aspectRatio } = map
-        const middleX = (tileWidth * aspectRatio[0]) / 2 
-        const middleY = (tileWidth * aspectRatio[1]) / 2 
-
-        const wPos = player.worldPos()
-        let inX = false, inY = false;
-
-        // Player pos relative to the game world
-        if((wPos.x + middleX) <= mapWidth && (wPos.x - middleX) >= 0){ 
-            inX = true
-        }else 
-        if((wPos.y - middleY) >= 0 && (wPos.y + middleY) <= mapHeight){ 
-            inY = true
-        }
-        
-        // Camera follows player
-        if(inX && inY) setCamPos(player.pos)
-            
-        if(inX && !inY){
-            // Reached top?
-            if((wPos.y - middleY) <= 0){
-                setCamPos(wPos.x, middleY)
-            }
-
-            // Reached down?
-            if((wPos.y + middleY) >= mapHeight){
-                setCamPos(wPos.x, mapHeight - middleY)
-            }
-        }
-
-        if(!inX && inY){
-            // Reached right?
-            if((wPos.x + middleX) >= mapWidth){
-                setCamPos(mapWidth - middleX, wPos.y)
-            }
-
-            // Reached left?
-            if((wPos.x - middleX) <= 0){
-                setCamPos(middleX, wPos.y)
-            }
-        }
-
-        if(!inX && !inY){
-            // Reached top and right?
-            if((wPos.y - middleY) <= 0 && (wPos.x + middleX) >= mapWidth){
-                setCamPos(mapWidth - middleX, middleY)
-            }
-
-            // Reached down and right?
-            if((wPos.y + middleY) >= mapHeight && (wPos.x + middleX) >= mapWidth){
-                setCamPos(mapWidth - middleX, mapHeight - middleY)
-            }
-
-            // Reached down and left?
-            if((wPos.y + middleY) >= mapHeight && (wPos.x - middleX) <= 0){
-                setCamPos(middleX, mapHeight - middleY)
-            }
-            
-            // Reached top and left?
-            if((wPos.y - middleY) <= 0 && (wPos.x - middleX) <= 0){
-                setCamPos(middleX, middleY)
-            }
-        }
-        // #endregion
     })
 
     // #region Player exit
@@ -510,9 +418,93 @@ const createPlayerSprite = (x: number, y: number, mapWidth: number, mapHeight: n
     ready = true
 }
 
+// #region Camera position
+const setCameraPosition = (mapWidth: number, mapHeight: number) => {
+    // Decide to move the camera or not
+    // const { x, y } = player.pos
+    const { tileWidth, aspectRatio } = map
+    const middleX = (tileWidth * aspectRatio[0]) / 2 
+    const middleY = (tileWidth * aspectRatio[1]) / 2 
+
+    const wPos = player.worldPos()
+    let inX = false, inY = false;
+
+    console.log(wPos)
+
+    // Player pos relative to the game world
+    if((wPos.x + middleX) <= mapWidth && (wPos.x - middleX) >= 0){ 
+        inX = true
+    }
+    
+    if((wPos.y - middleY) >= 0 && (wPos.y + middleY) <= mapHeight){ 
+        inY = true
+    }
+    
+    // Camera follows player
+    if(inX && inY){
+        console.log('camera follows player')
+        setCamPos(player.pos)
+    }
+        
+    if(inX && !inY){
+        // Reached top?
+        if((wPos.y - middleY) <= 0){
+            console.log('camera top')
+            setCamPos(wPos.x, middleY)
+        }
+
+        // Reached down?
+        if((wPos.y + middleY) >= mapHeight){
+            console.log('camera down')
+            setCamPos(wPos.x, mapHeight - middleY)
+        }
+    }
+
+    if(!inX && inY){
+        // Reached right?
+        if((wPos.x + middleX) >= mapWidth){
+            console.log('camera right')
+            setCamPos(mapWidth - middleX, wPos.y)
+        }
+
+        // Reached left?
+        if((wPos.x - middleX) <= 0){
+            console.log('camera left')
+            setCamPos(middleX, wPos.y)
+        }
+    }
+
+    if(!inX && !inY){
+        // Reached top right?
+        if((wPos.y - middleY) <= 0 && (wPos.x + middleX) >= mapWidth){
+            console.log('camera top right')
+            setCamPos(mapWidth - middleX, middleY)
+        }
+
+        // Reached down right?
+        if((wPos.y + middleY) >= mapHeight && (wPos.x + middleX) >= mapWidth){
+            console.log('camera down right')
+            setCamPos(mapWidth - middleX, mapHeight - middleY)
+        }
+
+        // Reached down left?
+        if((wPos.y + middleY) >= mapHeight && (wPos.x - middleX) <= 0){
+            console.log('camera down left')
+            setCamPos(middleX, mapHeight - middleY)
+        }
+        
+        // Reached top left?
+        if((wPos.y - middleY) <= 0 && (wPos.x - middleX) <= 0){
+            console.log('camera top left')
+            setCamPos(middleX, middleY)
+        }
+    }
+}
+// #endregion
+
 const InteractWithObject = (object: GameObj) => {
-    if(object.hasOwnProperty('name')){
-        switch(object.name){
+    if(object.hasOwnProperty('sprite')){
+        switch(object.sprite){
             case 'chest':
                 if(object.frame < 1){
                     // Open chest
@@ -558,9 +550,26 @@ const createItemSprite = (name: string, x: number, y: number, objWidth: number, 
                 chest[`${property.name}`] = property.value
             }
 
+            setItemCollision(chest)
+
             console.log('chest', chest)
         break;
     }
+}
+
+const setItemCollision = (item: GameObj) => {
+    item.onCollide("player", () => {
+        if(!collidedObjs.find(c => c.id === item.id)){
+            collidedObjs.push(item)
+        }
+    })
+
+    item.onCollideEnd("player", () => {
+        const index = collidedObjs.findIndex(c => c.id === item.id)
+        if(index >= 0){
+            collidedObjs.splice(index, 1) 
+        }
+    })
 }
 // #endregion
 
