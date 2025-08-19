@@ -105,7 +105,8 @@ const setMap = async(name: string) => {
 
     // custom property
     map.tileWidth = tilewidth
-    map.aspectRatio = [9, 16]
+    map.mapWidth = mapWidth
+    map.mapHeight = mapHeight
 
     for(const layer of mapData.layers){
         if (layer.type === "tilelayer") continue;
@@ -198,19 +199,19 @@ const setMap = async(name: string) => {
     const touched = exitTouched()
 
     if(touched.gt(0)){
-        const exit = map.children.find(child => child.direction && child.direction.eq(touched))
+        const exit = map.get('exit').find(exit => exit.direction.eq(touched))
         if(exit){
             switch(true){
-                case touched.gt(8) || touched.eq(8): // top
+                case touched.gte(8): // top
                     player = createPlayerSprite(map, exit.pos.x, exit.pos.y + 5, mapWidth, mapHeight)
                 break;
-                case touched.gt(6) || touched.eq(6): // right
+                case touched.gte(6): // right
                     player = createPlayerSprite(map, exit.pos.x - (player.width + 5), exit.pos.y, mapWidth, mapHeight)
                 break;
-                case touched.gt(4) || touched.eq(4): // left
+                case touched.gte(4): // left
                     player = createPlayerSprite(map, exit.pos.x + 5, exit.pos.y, mapWidth, mapHeight)
                 break;
-                case touched.gt(2) || touched.eq(2): // down
+                case touched.gte(2): // down
                     player = createPlayerSprite(map, exit.pos.x, exit.pos.y - (player.height + 5), mapWidth, mapHeight)
                 break;                   
             }            
@@ -242,12 +243,20 @@ const createItemSprite = (name: string, x: number, y: number, objWidth: number, 
                 body({ isStatic: true }),
                 // tags
                 "item",
+                // custom properties
+                {
+                    item: {}
+                }
             ])
 
-            // custom properties
+            
+            const item = {}
+
             for(const property of customProperty){
-                chest[`${property.name}`] = property.value
+                item[`${property.name}`] = property.value
             }
+
+            chest.item = item
 
             setItemCollision(chest)
 
@@ -270,8 +279,6 @@ const setItemCollision = (item: GameObj) => {
         }
     })
 }
-// #endregion
-
 
 const setMapArrow = (arrow: GameObj, floating: boolean, index: number) => {
     // Check direction
