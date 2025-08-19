@@ -2,16 +2,19 @@ import k from '../lib/kaplay'
 import { GameObj } from "kaplay";
 
 import store from '../store/store';
-import { setMenu } from '../store/game';
+import { setMenu, setTextLabel } from '../store/game';
 import { collidedObjs } from '../scene/game';
 
 const { 
     go,
+    get,
     sprite,
     area,
     body,
     pos,
     Rect,
+    rect,
+    text,
     vec2,
     getData,
     setData,
@@ -65,7 +68,7 @@ export const createPlayerSprite = (map: GameObj, x: number, y: number, mapWidth:
         }
 
         if (isKeyDown("left")){
-            setCameraPosition(map, player, mapWidth, mapHeight)
+            setCameraPosition(player, mapWidth, mapHeight)
             if(player.getCurAnim()?.name !== "left") player.play("left")
 
             const wPos = player.worldPos()
@@ -77,7 +80,7 @@ export const createPlayerSprite = (map: GameObj, x: number, y: number, mapWidth:
             checkStep(player)
         }
         if (isKeyDown("right")){
-            setCameraPosition(map, player, mapWidth, mapHeight)
+            setCameraPosition(player, mapWidth, mapHeight)
             if(player.getCurAnim()?.name !== "right") player.play("right")
 
             const wPos = player.worldPos()
@@ -89,7 +92,7 @@ export const createPlayerSprite = (map: GameObj, x: number, y: number, mapWidth:
             checkStep(player)
         }
         if (isKeyDown("up")){
-            setCameraPosition(map, player, mapWidth, mapHeight)
+            setCameraPosition(player, mapWidth, mapHeight)
             if(player.getCurAnim()?.name !== "up") player.play("up")
 
             const wPos = player.worldPos()
@@ -101,7 +104,7 @@ export const createPlayerSprite = (map: GameObj, x: number, y: number, mapWidth:
             checkStep(player)
         }
         if (isKeyDown("down")){
-            setCameraPosition(map, player, mapWidth, mapHeight)
+            setCameraPosition(player, mapWidth, mapHeight)
             if(player.getCurAnim()?.name !== "down") player.play("down")
 
             const wPos = player.worldPos()
@@ -235,12 +238,11 @@ export const createPlayerSprite = (map: GameObj, x: number, y: number, mapWidth:
 }
 
 // #region Camera position
-const setCameraPosition = (map: GameObj, player: GameObj, mapWidth: number, mapHeight: number) => {
+const setCameraPosition = (player: GameObj, mapWidth: number, mapHeight: number) => {
     // Decide to move the camera or not
     // const { x, y } = player.pos
-    const { tileWidth, aspectRatio } = map
-    const middleX = (tileWidth * aspectRatio[0]) / 2 
-    const middleY = (tileWidth * aspectRatio[1]) / 2 
+    const middleX = mapWidth / 2 
+    const middleY = mapHeight / 2 
 
     const wPos = player.worldPos()
     let inX = false, inY = false;
@@ -328,14 +330,69 @@ const InteractWithObject = (object: GameObj) => {
                         onEnd: () => {
                             // TODO - Obtain items
                             // TODO - Display text message
+                            const item = object.item?? null
+                            if(item){
+                                let content : string[] = []
+                                Object.entries(item).forEach(([key, value]) => {
+                                    content.push(`Obtained <label>${value}<label> ${key}s`)
+                                })
+                                setTextLabel(content)
+                            }else{
+                                setTextLabel('Nothing found')
+                            }
+
+                            // Remove item content
+                            delete object.item
                         }
                     })
                 }else{
                     // TODO - Display text message
+                    setTextLabel('Nothing found')
                 }
             break;
         }
     }
+}
+
+// Set item label position based on item position
+const setItemLabelPosition = (item: GameObj, content: string[] ) => {
+    const { x, y } = item.worldPos
+    const map = get('map')
+    const mapWidth = map['mapWidth']
+    const mapHeight = map['mapHeight']
+    const middleX = mapWidth / 2
+    const middleY = mapHeight / 2
+
+    if((x - middleX) <= 0 && (y - middleY) <= 0){ // top left
+        // Set position to down right of the item
+        item.add([
+            rect(content[0].length * (map['tileWidth'] / 2) , map['tileWidth']),
+            pos(item.pos.x, item.pos.y),
+        ])    
+
+        if(content.length > 1){
+
+        }else{
+        
+        }
+    }
+
+    if((x + middleX) >= mapWidth && (y - middleY) <= 0){ // top right
+        // Set position to down left of the item
+    }
+
+    if((x + middleX) <= mapWidth && (x - middleX) >= 0 && // In the middle
+        (y - middleY) >= 0 && (y + middleY) <= mapHeight){
+        // Set position on top of the item
+    }
+
+    if((x + middleX) <= mapWidth && (y + middleY) >= mapHeight){ // down right
+        // Set position to top left of the item
+    }    
+
+    if((x - middleX) >= 0 && (y + middleY) >= mapHeight){ // down left
+        // Set position top right of the item
+    }    
 }
 
 const checkStep = (player: GameObj) => {
