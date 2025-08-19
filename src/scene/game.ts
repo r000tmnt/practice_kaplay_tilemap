@@ -155,17 +155,24 @@ const setMap = async(name: string) => {
                     opacity(1),
                     anchor('center'),
                     rotate(),
+                    Number(object.name) >= 8? 
                     pos(
-                        Number(object.name) >= 6?
-                        object.x - 10 : // left
-                        Number(object.name) >= 4?
-                        object.x + 10 : // right
-                        object.x + (tilewidth /2) - 1, // center
-                        Number(object.name) >= 8? 
-                        object.y + 10 : // top
-                        Number(object.name) >= 2?
-                        object.y - 10 : // down
-                        object.y + (tilewidth /2) - 1 // center
+                        object.x + (tilewidth /2) - 1, // center    
+                        object.y + 10  // top                        
+                    ):
+                    Number(object.name) >= 6?
+                    pos(
+                        object.x - 10, // right
+                        object.y + (tilewidth /2) - 1 // center,                        
+                    ):
+                    Number(object.name) >= 4?
+                    pos(
+                        object.x + 10, // left
+                        object.y + (tilewidth /2) - 1 // center                            
+                    ):
+                    pos(
+                        object.x + (tilewidth /2) - 1, // center                           
+                        object.y - 10, // down
                     ),
                     // tags
                     "arrow",
@@ -198,7 +205,7 @@ const setMap = async(name: string) => {
 
     if(exitTouched > 0){
         const exit = map.children.find(child => child.direction && child.direction.eq(exitTouched))
-        if(exit)
+        if(exit){
             switch(true){
                 case exitTouched >= 8: // top
                     createPlayerSprite(exit.pos.x, exit.pos.y + 5, mapWidth, mapHeight)
@@ -212,15 +219,21 @@ const setMap = async(name: string) => {
                 case exitTouched >= 4: // left
                     createPlayerSprite(exit.pos.x + 5, exit.pos.y, mapWidth, mapHeight)
                 break;   
-            }
+            }            
+        }
     }    
 
     console.log(map)    
 }
 
-const createPlayerSprite = (x: number, y: number, mapWidth: number, mapHeight: number) => {
+const createPlayerSprite = (x: number, y: number, mapWidth: number, mapHeight: number, direction=8) => {
     player = map.add([
-        sprite("player", { frame: 2 }), // idle frame of the player sprite
+        sprite("player", { 
+            frame: (direction === 2)? 20: // down, facing top
+                   (direction === 4)? 8 : // left, facing right
+                   (direction === 6)? 14 : // right, facing left
+                   (direction === 8)? 2 : 0, // top, facing down
+        }), // idle frame of the player sprite
         area(),
         body(),
         pos(x, y),
@@ -401,10 +414,11 @@ const createPlayerSprite = (x: number, y: number, mapWidth: number, mapHeight: n
     if(exitTouched > 0){
         // Reset value
         exitTouched = 0
+        let opacity = 1
 
         // TODO - Reveal the screen when everything is ready
         tween(
-            exitTouched,
+            opacity,
             0,
             0.3,
             (v) => { 
@@ -435,7 +449,7 @@ const setCameraPosition = (mapWidth: number, mapHeight: number) => {
     if((wPos.x + middleX) <= mapWidth && (wPos.x - middleX) >= 0){ 
         inX = true
     }
-    
+
     if((wPos.y - middleY) >= 0 && (wPos.y + middleY) <= mapHeight){ 
         inY = true
     }
