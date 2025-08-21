@@ -13,8 +13,10 @@ const {
     body,
     pos,
     Rect,
-    rect,
-    text,
+    // rect,
+    // color,
+    // bezier,
+    // text,
     vec2,
     getData,
     setData,
@@ -59,16 +61,18 @@ export const createPlayerSprite = (map: GameObj, x: number, y: number, mapWidth:
         if(!getData('ready', false)) return
 
         const menuOpen = store.getState().game.menuOpen
+        const label = store.getState().game.textLabel
+        const dialogue = store.getState().dialogue.dialogue
 
-        if(menuOpen > 0) return
+        if(menuOpen > 0 || label.length || dialogue.length) return
 
         if(!isKeyDown()){
             player.stop()
             // setCameraPosition(mapWidth, mapHeight)
         }
 
-        if (isKeyDown("left")){
-            setCameraPosition(player, mapWidth, mapHeight)
+        if (isKeyDown("left") && !isKeyDown([ "right", "up", "down" ])){
+            setCameraPosition(map, player, mapWidth, mapHeight)
             if(player.getCurAnim()?.name !== "left") player.play("left")
 
             const wPos = player.worldPos()
@@ -79,8 +83,8 @@ export const createPlayerSprite = (map: GameObj, x: number, y: number, mapWidth:
                 
             checkStep(player)
         }
-        if (isKeyDown("right")){
-            setCameraPosition(player, mapWidth, mapHeight)
+        if (isKeyDown("right") && !isKeyDown([ "left", "up", "down" ])){
+            setCameraPosition(map, player, mapWidth, mapHeight)
             if(player.getCurAnim()?.name !== "right") player.play("right")
 
             const wPos = player.worldPos()
@@ -91,8 +95,8 @@ export const createPlayerSprite = (map: GameObj, x: number, y: number, mapWidth:
 
             checkStep(player)
         }
-        if (isKeyDown("up")){
-            setCameraPosition(player, mapWidth, mapHeight)
+        if (isKeyDown("up") && !isKeyDown([ "right", "left", "down" ])){
+            setCameraPosition(map, player, mapWidth, mapHeight)
             if(player.getCurAnim()?.name !== "up") player.play("up")
 
             const wPos = player.worldPos()
@@ -103,8 +107,8 @@ export const createPlayerSprite = (map: GameObj, x: number, y: number, mapWidth:
 
             checkStep(player)
         }
-        if (isKeyDown("down")){
-            setCameraPosition(player, mapWidth, mapHeight)
+        if (isKeyDown("down") && !isKeyDown([ "right", "up", "left" ])){
+            setCameraPosition(map, player, mapWidth, mapHeight)
             if(player.getCurAnim()?.name !== "down") player.play("down")
 
             const wPos = player.worldPos()
@@ -238,11 +242,11 @@ export const createPlayerSprite = (map: GameObj, x: number, y: number, mapWidth:
 }
 
 // #region Camera position
-const setCameraPosition = (player: GameObj, mapWidth: number, mapHeight: number) => {
+const setCameraPosition = (map: GameObj, player: GameObj, mapWidth: number, mapHeight: number) => {
     // Decide to move the camera or not
     // const { x, y } = player.pos
-    const middleX = mapWidth / 2 
-    const middleY = mapHeight / 2 
+    const middleX = (map['tileWidth'] * 9) / 2 
+    const middleY = (map['tileWidth'] * 16) / 2 
 
     const wPos = player.worldPos()
     let inX = false, inY = false;
@@ -333,16 +337,17 @@ const InteractWithObject = (object: GameObj) => {
                             const item = object.item?? null
                             if(item){
                                 let content : string[] = []
-                                Object.entries(item).forEach(([key, value]) => {
-                                    content.push(`Obtained <label>${value}<label> ${key}s`)
+                                Object.entries(item).forEach(([key, value], index) => {
+                                    content.push(`<div key='${index}'>Obtained ${(Number(value) > 1)? `${value} ` : ''}<span style="color: yellow">${key}</span><div>`)
                                 })
-                                setTextLabel(content)
+
+                                // setItemLabelPosition(object, content)
+                                store.dispatch(setTextLabel(content))
+                                // Remove item content
+                                delete object.item
                             }else{
                                 setTextLabel('Nothing found')
                             }
-
-                            // Remove item content
-                            delete object.item
                         }
                     })
                 }else{
@@ -355,45 +360,87 @@ const InteractWithObject = (object: GameObj) => {
 }
 
 // Set item label position based on item position
-const setItemLabelPosition = (item: GameObj, content: string[] ) => {
-    const { x, y } = item.worldPos
-    const map = get('map')
-    const mapWidth = map['mapWidth']
-    const mapHeight = map['mapHeight']
-    const middleX = mapWidth / 2
-    const middleY = mapHeight / 2
+// const setItemLabelPosition = (item: GameObj, content: string[] ) => {
+//     const { x, y } = item.pos
+//     const map = get('map')
+//     const { mapWidth, mapHeight, tileWidth } = map[0]
+//     const middleX = mapWidth / 2
+//     const middleY = mapHeight / 2
+//     const halfTileWidth = tileWidth / 2
+//         // Set position to down right of the item
+//         // Set 4 points to follow
+//         const path = [
+//             [halfTileWidth, halfTileWidth + 4],
+//             [halfTileWidth + 1, halfTileWidth + 10],
+//             [halfTileWidth + 5, halfTileWidth + 14],
+//             [halfTileWidth + 7, halfTileWidth + 15],
+//             [halfTileWidth + 8, halfTileWidth + 16],
+//             // [halfTileWidth + 12, halfTileWidth + 18],
+//         ]
 
-    if((x - middleX) <= 0 && (y - middleY) <= 0){ // top left
-        // Set position to down right of the item
-        item.add([
-            rect(content[0].length * (map['tileWidth'] / 2) , map['tileWidth']),
-            pos(item.pos.x, item.pos.y),
-        ])    
+//         item.add([
+//             rect(content[0].length * (halfTileWidth / 2), tileWidth),
+//             pos(halfTileWidth, halfTileWidth),
+//             // tags
+//             "itemLabel",
+//         ])    
 
-        if(content.length > 1){
+//         item.children[0].add([
+//             text(content[0], { size: halfTileWidth, align: 'center', width: item.children[0].width, font: 'bebasNeue_regular' }),
+//             color(0, 0, 0),
+//             pos(0, halfTileWidth / 2)
+//         ])
 
-        }else{
+//         const showLabel = (index = 0) => {
+//             tween(
+//                 item.children[0].pos,
+//                 vec2(path[index][0], path[index][1]),
+//                 0.1,
+//                 (v) => { 
+//                     console.log('item pos', v)
+//                     item.children[0].pos = v
+//                 },
+//                 easings.easeInOutQuad
+//             ).onEnd(() => { 
+//                 if(index < path.length - 1){
+//                     showLabel(index + 1)
+//                 }else{
+//                     // item.children[0].destroy()
+//                     // // TODO - Display text label
+//                     // store.dispatch(setTextLabel(content))
+//                 }
+//             })
+//         }
+
+//         showLabel()
+
+//     if((x - middleX) <= 0 && (y - middleY) <= 0){ // top left
+
+
+//         // if(content.length > 1){
+
+//         // }else{
         
-        }
-    }
+//         // }
+//     }
 
-    if((x + middleX) >= mapWidth && (y - middleY) <= 0){ // top right
-        // Set position to down left of the item
-    }
+//     if((x + middleX) >= mapWidth && (y - middleY) <= 0){ // top right
+//         // Set position to down left of the item
+//     }
 
-    if((x + middleX) <= mapWidth && (x - middleX) >= 0 && // In the middle
-        (y - middleY) >= 0 && (y + middleY) <= mapHeight){
-        // Set position on top of the item
-    }
+//     if((x + middleX) <= mapWidth && (x - middleX) >= 0 && // In the middle
+//         (y - middleY) >= 0 && (y + middleY) <= mapHeight){
+//         // Set position on top of the item
+//     }
 
-    if((x + middleX) <= mapWidth && (y + middleY) >= mapHeight){ // down right
-        // Set position to top left of the item
-    }    
+//     if((x + middleX) <= mapWidth && (y + middleY) >= mapHeight){ // down right
+//         // Set position to top left of the item
+//     }    
 
-    if((x - middleX) >= 0 && (y + middleY) >= mapHeight){ // down left
-        // Set position top right of the item
-    }    
-}
+//     if((x - middleX) >= 0 && (y + middleY) >= mapHeight){ // down left
+//         // Set position top right of the item
+//     }    
+// }
 
 const checkStep = (player: GameObj) => {
     // setCamPos(player.pos)
