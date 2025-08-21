@@ -8,6 +8,7 @@ import { setScale, setUIoffset } from './store/setting';
 
 // Components
 const Menu = lazy(() => import('./components/menu'))
+const Dialogue = lazy(() => import('./components/dialogue'))
 
 // Game init
 initGame()
@@ -15,7 +16,9 @@ initGame()
 function App() {
   const gameWidth = useSelector(state => state.setting.width)
   const gameHeight = useSelector(state => state.setting.height)
-  const uiOffsetV = useSelector(state => state.setting.uiOffsetV)
+  const menuOpen = useSelector(state => state.game.menuOpen)
+  const label = useSelector((state) => state.game.textLabel)
+  const dialogue = useSelector(state => state.dialogue)  
   const dispatch = useDispatch()
 
   // #region Scale UI
@@ -44,6 +47,10 @@ function App() {
   }
 
   useEffect(() => {
+    console.log('dialouge coming', label)
+  }, [label, dialogue])
+
+  useEffect(() => {
     window.addEventListener('resize', scaleUI)
 
     // Fire the function on the first time
@@ -59,7 +66,15 @@ function App() {
 
   return (
     <>
-      <Menu />
+      {
+        menuOpen > 0?
+        <Menu /> : null
+      }
+
+      {
+        label.length || dialogue.length?
+        <Dialogue /> : null
+      }
     </>
   )
 }
