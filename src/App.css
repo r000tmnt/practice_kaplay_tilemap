@@ -31,6 +31,10 @@ body {
   transform: translate(-50%, -50%);
 }
 
+.bg-black{
+  background-color: black;
+}
+
 .ui {
   position: absolute;
   top: 0;
@@ -43,6 +47,11 @@ body {
   box-sizing: border-box;
   overflow: hidden;
   z-index: 10;
+}
+
+.disable-scrollbars {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE 10+ */
 }
 
 .menu{
@@ -58,6 +67,34 @@ body {
   transition: all .1s ease-in-out;
 }
 
+.dialogue_wrapper{
+  position: fixed;
+  /* bottom: 0; */
+  width: 100%;
+  height: 25%;
+  font-size: 1.5rem;
+  font-weight: 500;
+  /* transform: translateY(-20%); */
+  background-color: rgba(0, 0, 0, 0.75);
+  transition: all .1s ease-in-out;
+}
+
+.name_tag{
+  position: relative;
+  width: fit-content;
+  padding: 1%;
+}
+
+.dialogue{
+  width: 95%;
+  height: 100%;
+  margin: 0 auto;
+  padding: 1%;
+  overflow: hidden;
+  overflow-y: scroll;
+  transform: translateY(-5%);
+}
+
 /* .menu > li{
   justify-content: space-around;
 } */
@@ -66,12 +103,10 @@ body {
   text-align: left;
 }
 
-.show{
-  margin-left: 0;
-}
-
 .hide{
   margin-left: 100%;
 }
 
-
+.show{
+  margin-left: 0;
+}
