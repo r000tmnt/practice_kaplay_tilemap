@@ -12,6 +12,7 @@
   "dependencies": {
     "@reduxjs/toolkit": "^2.8.2",
     "big.js": "^7.0.1",
+    "html-react-parser": "^5.2.6",
     "kaplay": "^3001.0.19",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
