@@ -1,6 +1,8 @@
-import { useEffect, useState } from "react"
+import { useEffect, useState, useRef } from "react"
 // import store from "../store/store"
-import { useSelector } from "react-redux"
+import { setTextLabel } from "../store/game";
+import { setDialogue } from "../store/dialogue";
+import { useDispatch, useSelector } from "react-redux"
 import parse from 'html-react-parser';
 
 export default function Dialogue(){
@@ -17,17 +19,28 @@ export default function Dialogue(){
     // const flag = useSelector(state => state.flag) 
     // const point = useSelector(state => state.point)    
     const [isVisible, setIsVisible] = useState(false)
+    const dialogueRef = useRef(null)
+    const dispath = useDispatch()
 
     const setDialoguePosition = ($el) => {
         if($el){
             setTimeout(() => {
                 $el.style.bottom = 0
-            }, 50)
+            }, 25)
         }
     }
 
     const handleContinue = ($event) => {
         console.log('clicked or pressed', $event)
+
+        if(!dialogueRef.current) return
+
+        if(dialogueRef.current.childElementCount > 1){
+            if($event.type === 'click' || $event.key === 'Enter'){
+                if(label.length) dispath(setTextLabel([]))
+                if(dialogue.length) dispath(setDialogue(''))
+            }            
+        }
     }    
 
     useEffect(() => {
@@ -53,12 +66,12 @@ export default function Dialogue(){
                 className='dialogue_wrapper' 
                 style={{ bottom: `-${gameHeight}px`}}
                 ref={($el) => setDialoguePosition($el)}
-                onClick={handleContinue}  
+                onClick={(e) => handleContinue(e)}  
             >
                 <div className='name_tag border bg-black' style={{ visibility: isVisible? 'visible' : 'hidden', zIndex: name.length? 11 : -1 }}>
                     { /** name  */ }
                 </div>
-                <div className='dialogue border disable-scrollbars'>
+                <div className='dialogue border disable-scrollbars' ref={($el) => dialogueRef.current = $el}>
                     <p>{ /** dialogue  */  }</p>
                     {
                         label.length?
