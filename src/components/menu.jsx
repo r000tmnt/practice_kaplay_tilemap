@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { pixelatedBorder } from '../utils/ui'
 import store from "../store/store";
@@ -14,16 +14,14 @@ export default function Menu() {
     const uiOffsetV = useSelector(state => state.setting.uiOffsetV)
     // const uiOffsetH = useSelector(state => state.setting.uiOffsetH)   
     const [menuIndex, setMenuIndex] = useState(0) 
-    const uiRef = useRef()
 
     const setMenuPosition = ($el) => {
-        if(uiRef.current){
-            console.log(uiRef.current)
-            const menuEl = uiRef.current.children[0]
-            // if($el){
-            console.log($el)
-            menuEl.style.left = `${uiRef.current.clientWidth - menuEl.clientWidth}px`
-            // }
+        if($el){
+            // console.log($el)
+            const parentEl = $el.parentElement
+            // console.log(parentEl)
+            $el.style.left = `${parentEl.clientWidth - $el.clientWidth}px`
+            setTimeout(() => $el.classList.add('show'), 50)
         }
     }
 
@@ -44,19 +42,17 @@ export default function Menu() {
     }, [menuOpen])
 
     useEffect(() => {
-        window.addEventListener('keyup', keyInputEvent)
+        window.addEventListener('keyup', keyInputEvent, true)
 
         return () => {
-            window.removeEventListener('keyup', keyInputEvent)
+            window.removeEventListener('keyup', keyInputEvent , true)
         }
     }, [])
 
     return(
-        <div 
-            className='ui' style={{left: `${menuOpen > 0? `${uiOffsetV}px` : `-${gameWidth}px` }`}}
-            ref={($el) => uiRef.current = $el}>
+        <div className='ui' style={{left: `${uiOffsetV}px`}}>
             <ul 
-                className={`menu ${menuOpen === 1? 'show' : 'hide'}`}
+                className={`menu hide`}
                 ref={($el) => setMenuPosition($el)}
                 style={{
                     width: `${gameWidth * 0.3}px`, 
@@ -91,6 +87,5 @@ export default function Menu() {
                     }
             </ul>            
         </div>
-
     )
 }
