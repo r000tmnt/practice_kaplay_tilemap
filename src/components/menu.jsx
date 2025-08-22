@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { pixelatedBorder } from '../utils/ui'
 import { setMenu } from "../store/game"
@@ -24,8 +24,11 @@ export default function Menu() {
     const units = useSelector(state => state.game.units)  
     const inventory = useSelector(state => state.game.inventory)
     const [menuIndex, setMenuIndex] = useState(0) 
+    const [innerMenu, setInnerMenu] = useState(0)
+    const [innerMenuIndex, setInnerMenuIndex] = useState(0)
     const [skillList, setSkillList] = useState([])
-    const [itemList, setItemList] = useState([])    
+    const [itemList, setItemList] = useState([])  
+    const pointedItem  = useRef({})
     const dispath = useDispatch()
 
     const setMenuPosition = ($el) => {
@@ -52,7 +55,17 @@ export default function Menu() {
                 if($event.key === 'ArrowUp') setMenuIndex(preState => (preState - 2) < 0? preState : preState - 2)
                 if($event.key === 'ArrowDown') setMenuIndex(preState => preState + 2)
                 if($event.key === 'ArrowRight') setMenuIndex(preState => preState + 1)
-                if($event.key === 'ArrowLeft') setMenuIndex(preState => preState === 0? 0 : preState - 1)  
+                if($event.key === 'ArrowLeft') setMenuIndex(preState => preState === 0? 0 : preState - 1)
+                if($event.key === 'Escape'){
+                    if(innerMenuIndex > 0){
+                        setInnerMenu(0)
+                    }else{
+                        dispath(setMenu(0))
+                    }
+                }
+                if($event.key === 'Enter'){
+                    if(itemList[menuIndex - ITEMFILTER.length].type ===1) setInnerMenu(1)
+                }
             break;
             case 5: case 6: 
                 if($event.key === 'ArrowUp') setMenuIndex(preState => preState === 0? 0 : preState - 1)
@@ -212,6 +225,22 @@ export default function Menu() {
                         padding: `${scale * 10}px`,
                         boxSizing: 'border-box'
                     }}>
+                        { innerMenu > 0? <div className="innerMenu">
+                            { innerMenu === 1?
+                                <div className="flex">
+                                    { units.map((unit, index) => 
+                                        <div style={{ position: 'relative' }}>
+                                            { menuOpen === 2 && innerMenuIndex === index? 
+                                                <MenuArrow style={{ position: 'absolute', zIndex: 11 }} /> : null
+                                            }                                               
+                                            <div>{ unit.name }</div>
+                                            <div>{unit.attribute.hp}/{unit.attribute.maxHp}</div>
+                                            <div>{unit.attribute.mp}/{unit.attribute.maxMp}</div>
+                                        </div>) 
+                                    }
+                                </div> : null
+                            }
+                        </div> : null }
                         { itemList[menuIndex - ITEMFILTER.length]? itemList[menuIndex - ITEMFILTER.length].desc : '' }
                     </div>
                     <button style={{ 
