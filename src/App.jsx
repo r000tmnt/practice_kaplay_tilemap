@@ -5,10 +5,14 @@ import initGame from './scene/game'
 // store
 import { useSelector, useDispatch } from 'react-redux';
 import { setScale, setUIoffset } from './store/setting';
+import { setUnits } from './store/game';
 
 // Components
 const Menu = lazy(() => import('./components/menu'))
 const Dialogue = lazy(() => import('./components/dialogue'))
+
+// Data
+import playerData from './data/player.json'
 
 // Game init
 initGame()
@@ -55,6 +59,9 @@ function App() {
 
     // Fire the function on the first time
     scaleUI()        
+
+    // Store player data
+    dispatch(setUnits(playerData))
 
     // Cleanup: Remove event listener on component unmount
     return () => {
