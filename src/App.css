@@ -35,6 +35,13 @@ body {
   background-color: black;
 }
 
+.bottom{
+  position: absolute;
+  bottom: 0;
+  width: 95%;
+  margin: 0 auto;
+}
+
 .ui {
   position: absolute;
   top: 0;
@@ -75,6 +82,10 @@ body {
   background-color: white;
 }
 
+.filter{
+  justify-content: space-around;
+}
+
 .items{
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -112,8 +123,8 @@ body {
   justify-content: space-around;
 } */
 
-.menu > li > span{
-  text-align: left;
+.menu > li{
+  align-items: flex-end;
 }
 
 .hide{
