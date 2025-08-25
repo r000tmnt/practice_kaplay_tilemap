@@ -28,7 +28,11 @@ export default function Menu() {
     const [innerMenuIndex, setInnerMenuIndex] = useState(0)
     const [skillList, setSkillList] = useState([])
     const [itemList, setItemList] = useState([])  
-    const pointedItem  = useRef({})
+
+    // A shared state ref
+    const menuIndexRef = useRef(0)
+    const listRef = useRef([])
+
     const dispath = useDispatch()
 
     const setMenuPosition = ($el) => {
@@ -49,7 +53,7 @@ export default function Menu() {
             case 1:
                 if($event.key === 'ArrowUp') setMenuIndex(preState => preState === 0? 0 : preState - 1)
                 if($event.key === 'ArrowDown') setMenuIndex(preState => preState === (MEMUITEM.length - 1)? MEMUITEM.length - 1 : preState + 1)
-                if($event.key === 'Enter') dispath(setMenu(menuIndex + 2))                 
+                if($event.key === 'Enter') dispath(setMenu(menuIndexRef.current + 2))                 
             break;  
             case 2: case 3: // ITEM, SKILL
                 if($event.key === 'ArrowUp') setMenuIndex(preState => (preState - 2) < 0? preState : preState - 2)
@@ -64,7 +68,7 @@ export default function Menu() {
                     }
                 }
                 if($event.key === 'Enter'){
-                    if(itemList[menuIndex - ITEMFILTER.length].type ===1) setInnerMenu(1)
+                    if(listRef.current[menuIndexRef.current - ITEMFILTER.length].type ===1) setInnerMenu(1)
                 }
             break;
             case 5: case 6: 
@@ -115,15 +119,17 @@ export default function Menu() {
     }, [menuOpen])
 
     useEffect(() => {
-        // console.log('menuIndex updated', menuIndex)
-        if(menuIndex > ((itemList.length - 1) + ITEMFILTER.length)){
-            setMenuIndex((itemList.length - 1) + ITEMFILTER.length)
+        if(innerMenuIndex === 0) {
+            menuIndexRef.current = menuIndex
+        }else{
+            menuIndexRef.current = innerMenuIndex
         }
+    }, [menuIndex, innerMenuIndex])
 
-        if(menuIndex < 0){
-            setMenuIndex(0)
-        }
-    }, [menuIndex, itemList])
+    useEffect(() => {
+        if(itemList.length) listRef.current = itemList
+        if(skillList.length) listRef.current = skillList
+    }, [itemList, skillList])
 
     useEffect(() => {
         window.addEventListener('keyup', keyInputEvent, true)
@@ -221,27 +227,32 @@ export default function Menu() {
                 </div>
                 <div className="bottom">
                     <div className="desc" style={{ 
+                        width: '100%',
                         boxShadow: pixelatedBorder(scale * 10, 'black'), 
                         padding: `${scale * 10}px`,
                         boxSizing: 'border-box'
                     }}>
-                        { innerMenu > 0? <div className="innerMenu">
-                            { innerMenu === 1?
-                                <div className="flex">
-                                    { units.map((unit, index) => 
-                                        <div style={{ position: 'relative' }}>
-                                            { menuOpen === 2 && innerMenuIndex === index? 
-                                                <MenuArrow style={{ position: 'absolute', zIndex: 11 }} /> : null
-                                            }                                               
-                                            <div>{ unit.name }</div>
-                                            <div>{unit.attribute.hp}/{unit.attribute.maxHp}</div>
-                                            <div>{unit.attribute.mp}/{unit.attribute.maxMp}</div>
-                                        </div>) 
-                                    }
-                                </div> : null
-                            }
-                        </div> : null }
-                        { itemList[menuIndex - ITEMFILTER.length]? itemList[menuIndex - ITEMFILTER.length].desc : '' }
+                        { innerMenu > 0? 
+                            <div className="innerMenu">
+                                { innerMenu === 1?
+                                    <div className="flex flex-col" >
+                                        { units.map((unit, index) => 
+                                            <div className="flex" style={{ position: 'relative', alignItems: 'right', whiteSpace: 'nowrap' }} key={index}>
+                                                { menuOpen === 2 && innerMenuIndex === index? 
+                                                    // <span style={{ position: 'absolute', zIndex: 11 }}>
+                                                        <MenuArrow /> 
+                                                    // </span>
+                                                    : null
+                                                }                                               
+                                                <div>{ unit.name }</div>
+                                                <div>HP {unit.attribute.hp}/{unit.attribute.maxHp}</div>
+                                                <div>MP {unit.attribute.mp}/{unit.attribute.maxMp}</div>
+                                            </div>) 
+                                        }
+                                    </div> : null
+                                }
+                            </div> : itemList[menuIndex - ITEMFILTER.length]? itemList[menuIndex - ITEMFILTER.length].desc : ''
+                        }
                     </div>
                     <button style={{ 
                         width: '100%', 
@@ -249,7 +260,12 @@ export default function Menu() {
                         margin: `${scale * 10}px 0`,
                         color: 'black', 
                         fontSize: `${8 * (scale * 10)}px` 
-                    }} onClick={() => dispath(setMenu(1))}>BACK</button>
+                    }} onClick={() => {
+                        setInnerMenu(0)
+                        setInnerMenuIndex(0)
+                        dispath(setMenu(1))
+                        setItemList([])
+                    }}>BACK</button>
                 </div>
             </div>
 
