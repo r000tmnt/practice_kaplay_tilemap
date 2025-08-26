@@ -4,3 +4,7 @@ export const pixelatedBorder = (size: number, color: string) => {
             0 ${size}px 0 0 ${color}, 
             0 -${size}px 0 0 ${color}`;
 }
+
+export const ITEMFILTER = [
+    'ALL', 'EQUIP', 'CONSUME', 'MATERIAL', 'STORY'
+]
