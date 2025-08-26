@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { pixelatedBorder } from '../utils/ui'
-import { setMenu } from "../store/game"
+import { setMenu, setList } from "../store/game"
 import store from "../store/store";
 
 import MenuArrow from './menuArrow'
@@ -16,22 +16,20 @@ const ITEMFILTER = [
 
 export default function Menu() {
     const menuOpen = useSelector(state => state.game.menuOpen)
+    const innerMenuOpen = useSelector(state => state.game.innerMenuOpen)
     const gameWidth = useSelector(state => state.setting.width)
     const gameHeight = useSelector(state => state.setting.height)
     const scale = useSelector(state => state.setting.scale)
     const uiOffsetV = useSelector(state => state.setting.uiOffsetV)
     // const uiOffsetH = useSelector(state => state.setting.uiOffsetH) 
     const units = useSelector(state => state.game.units)  
+    const itemList = useSelector(state => state.game.items)
     const inventory = useSelector(state => state.game.inventory)
-    const [menuIndex, setMenuIndex] = useState(0) 
-    const [innerMenu, setInnerMenu] = useState(0)
+    const [menuIndex, setMenuIndex] = useState(0)
     const [innerMenuIndex, setInnerMenuIndex] = useState(0)
-    const [skillList, setSkillList] = useState([])
-    const [itemList, setItemList] = useState([])  
 
     // A shared state ref
     const menuIndexRef = useRef(0)
-    const listRef = useRef([])
 
     const dispath = useDispatch()
 
@@ -53,22 +51,48 @@ export default function Menu() {
             case 1:
                 if($event.key === 'ArrowUp') setMenuIndex(preState => preState === 0? 0 : preState - 1)
                 if($event.key === 'ArrowDown') setMenuIndex(preState => preState === (MEMUITEM.length - 1)? MEMUITEM.length - 1 : preState + 1)
-                if($event.key === 'Enter') dispath(setMenu(menuIndexRef.current + 2))                 
+                if($event.key === 'Enter') dispath(setMenu({ type: 1, value: menuIndexRef.current + 2 }))                 
             break;  
             case 2: case 3: // ITEM, SKILL
-                if($event.key === 'ArrowUp') setMenuIndex(preState => (preState - 2) < 0? preState : preState - 2)
-                if($event.key === 'ArrowDown') setMenuIndex(preState => preState + 2)
-                if($event.key === 'ArrowRight') setMenuIndex(preState => preState + 1)
-                if($event.key === 'ArrowLeft') setMenuIndex(preState => preState === 0? 0 : preState - 1)
+                if($event.key === 'ArrowUp'){
+                    if(store.getState().game.innerMenuOpen > 0){
+                        setInnerMenuIndex(preState => (preState === 0)? 0 : preState - 1)
+                        return
+                    }
+                    setMenuIndex(preState => (preState - 2) < 0? preState : preState - 2)
+                }
+                if($event.key === 'ArrowDown'){
+                    if(store.getState().game.innerMenuOpen > 0){
+                        setInnerMenuIndex(preState => (preState === (units.length - 1))? preState : preState + 1)
+                        return
+                    }
+                    setMenuIndex(preState => preState + 2)
+                }
+                if($event.key === 'ArrowRight'){
+                    if(store.getState().game.innerMenuOpen > 0) return
+                    setMenuIndex(preState => preState + 1)
+                }
+                if($event.key === 'ArrowLeft'){
+                    if(store.getState().game.innerMenuOpen > 0) return
+                    setMenuIndex(preState => preState === 0? 0 : preState - 1)
+                }
                 if($event.key === 'Escape'){
-                    if(innerMenuIndex > 0){
-                        setInnerMenu(0)
+                    if(store.getState().game.innerMenuOpen > 0){
+                        // CLose inner menu
+                        setInnerMenuIndex(0)
+                        dispath(setMenu({ type: 2, value: 0 }))
                     }else{
-                        dispath(setMenu(0))
+                        // Close parent menu
+                        setMenuIndex(0)
                     }
                 }
                 if($event.key === 'Enter'){
-                    if(listRef.current[menuIndexRef.current - ITEMFILTER.length].type ===1) setInnerMenu(1)
+                    if(store.getState().game.innerMenuOpen > 0){
+                        console.log(`use ${menuOpen === 2? 'item': 'skill'}`)
+                        return
+                    }
+                    const itemList = store.getState().game.items
+                    if(itemList[menuIndexRef.current - ITEMFILTER.length].type ===1) dispath(setMenu({ type: 2, value: 1 }))
                 }
             break;
             case 5: case 6: 
@@ -89,6 +113,7 @@ export default function Menu() {
                 setMenuIndex(ITEMFILTER.length)
                 import('../data/items.json').then(data => {
                     console.log(data)
+                    const items = []
                     for(const item of inventory){
                         const itemData = data.default.find(d => d.id === item.id)
                         if(itemData.stackable){
@@ -96,17 +121,19 @@ export default function Menu() {
                         }else{
                             itemData.amount = 1
                         }
+
+                        items.push(itemData)
                         
-                        setItemList(prev => {
-                            return [...prev, itemData]
-                        })
                     }
+                    dispath(
+                        setList({ type: 2, data: items })
+                    )                 
                 })
             break;
             case 3:
                 import('../data/skill.json').then(data => {
                     console.log(data)
-                    setSkillList(data.default)
+                    // setSkillList(data.default)
                 })                
             break;       
             case 6:
@@ -125,11 +152,6 @@ export default function Menu() {
             menuIndexRef.current = innerMenuIndex
         }
     }, [menuIndex, innerMenuIndex])
-
-    useEffect(() => {
-        if(itemList.length) listRef.current = itemList
-        if(skillList.length) listRef.current = skillList
-    }, [itemList, skillList])
 
     useEffect(() => {
         window.addEventListener('keyup', keyInputEvent, true)
@@ -208,8 +230,13 @@ export default function Menu() {
                         <div 
                             className="item flex" 
                             key={index} 
-                            style={{
-                                border: `${scale * 10}px solid transparent`,
+                            style={{ border: `${scale * 10}px solid transparent`, }}
+                            onMouseOver={() => {
+                                if(innerMenuOpen > 0) return
+                                setMenuIndex(index + ITEMFILTER.length)
+                            }}
+                            onClick={() => {
+                                if(item.type === 1) dispath(setMenu({ type: 2, value: 1 }))
                             }}>
                             { menuOpen === 2 && menuIndex === (index + ITEMFILTER.length)? 
                                 <MenuArrow /> : null
@@ -232,22 +259,34 @@ export default function Menu() {
                         padding: `${scale * 10}px`,
                         boxSizing: 'border-box'
                     }}>
-                        { innerMenu > 0? 
+                        { innerMenuOpen > 0? 
                             <div className="innerMenu">
-                                { innerMenu === 1?
-                                    <div className="flex flex-col" >
+                                { innerMenuOpen === 1?
+                                    <div className="flex flex-col">
                                         { units.map((unit, index) => 
-                                            <div className="flex" style={{ position: 'relative', alignItems: 'right', whiteSpace: 'nowrap' }} key={index}>
+                                            <div 
+                                                className="flex" 
+                                                key={index} 
+                                                onMouseOver={() => setInnerMenuIndex(index)}
+                                                onClick={() => { console.log('use item') }}>
                                                 { menuOpen === 2 && innerMenuIndex === index? 
-                                                    // <span style={{ position: 'absolute', zIndex: 11 }}>
+                                                    <span style={{ position: 'absolute', zIndex: 11 }}>
                                                         <MenuArrow /> 
-                                                    // </span>
+                                                    </span>
                                                     : null
-                                                }                                               
-                                                <div>{ unit.name }</div>
-                                                <div>HP {unit.attribute.hp}/{unit.attribute.maxHp}</div>
-                                                <div>MP {unit.attribute.mp}/{unit.attribute.maxMp}</div>
-                                            </div>) 
+                                                }                                                
+                                                <div 
+                                                    className="flex w-full" 
+                                                    style={{
+                                                        whiteSpace: 'nowrap',
+                                                        justifyContent: 'space-around'
+                                                    }} >
+                                                    <div>{ unit.name }</div>
+                                                    <div>HP {unit.attribute.hp}/{unit.attribute.maxHp}</div>
+                                                    <div>MP {unit.attribute.mp}/{unit.attribute.maxMp}</div>
+                                                </div>                                                
+                                            </div>
+                                            ) 
                                         }
                                     </div> : null
                                 }
@@ -261,10 +300,15 @@ export default function Menu() {
                         color: 'black', 
                         fontSize: `${8 * (scale * 10)}px` 
                     }} onClick={() => {
-                        setInnerMenu(0)
-                        setInnerMenuIndex(0)
-                        dispath(setMenu(1))
-                        setItemList([])
+                        if(innerMenuIndex > 0){
+                            // Close inner menu
+                            dispath(setMenu({ type: 2, value: 0 }))
+                            setInnerMenuIndex(0)
+                        }else{
+                            // Close parent menu
+                            setMenuIndex(0)
+                            dispath(setList({ type: 2, data: [] }))                            
+                        }
                     }}>BACK</button>
                 </div>
             </div>
