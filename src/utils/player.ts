@@ -131,9 +131,6 @@ export const createPlayerSprite = (map: GameObj, x: number, y: number, mapWidth:
 
             if(innerMenuOpen > 0) return
             if(menuOpen > 1){
-                store.dispatch(
-                    setMenu({type: 1, value: 1})
-                )           
                 return
             }else{
                 store.dispatch(
