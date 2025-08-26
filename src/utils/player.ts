@@ -127,11 +127,19 @@ export const createPlayerSprite = (map: GameObj, x: number, y: number, mapWidth:
         if (isKeyPressed('escape')){
             console.log('escape key pressed')
             const menuOpen = store.getState().game.menuOpen
+            const innerMenuOpen = store.getState().game.innerMenuOpen
 
-            // TODO - Close inner menu
-            store.dispatch(
-                setMenu(menuOpen? 0 : 1)
-            )
+            if(innerMenuOpen > 0) return
+            if(menuOpen > 1){
+                store.dispatch(
+                    setMenu({type: 1, value: menuOpen - 1})
+                )           
+                return
+            }else{
+                store.dispatch(
+                    setMenu({type: 1, value: menuOpen? 0 : 1})
+                )                
+            }
 
             const mapArrows = map.get('arrow')
 
