@@ -5,7 +5,7 @@ import initGame from './scene/game'
 // store
 import { useSelector, useDispatch } from 'react-redux';
 import { setScale, setUIoffset } from './store/setting';
-import { setUnits } from './store/game';
+import { setList } from './store/game';
 
 // Components
 const Menu = lazy(() => import('./components/menu'))
@@ -61,7 +61,7 @@ function App() {
     scaleUI()        
 
     // Store player data
-    dispatch(setUnits(playerData))
+    dispatch(setList({ type: 1, data: playerData }))
 
     // Cleanup: Remove event listener on component unmount
     return () => {
