@@ -1,12 +1,19 @@
 import { useSelector, useDispatch } from "react-redux"
-import { useState, useEffect, useImperativeHandle } from "react"
+import { useState, useEffect } from "react"
 import { setMenu, setList } from '../store/game'
 import { pixelatedBorder } from '../utils/ui'
 import { ITEMFILTER } from "../utils/ui"
 
 import MenuArrow from './menuArrow'
 
-function ItemMenu({ menuIndex, innerMenuIndex, setMenuIndex, setInnerMenuIndex }, ref){
+function ItemMenu({ 
+    menuIndex, 
+    innerMenuIndex,
+    enterPressed,
+    setEnterPressed,     
+    setMenuIndex, 
+    setInnerMenuIndex,
+}){
     const menuOpen = useSelector(state => state.game.menuOpen)
     const innerMenuOpen = useSelector(state => state.game.innerMenuOpen)
     const gameWidth = useSelector(state => state.setting.width)
@@ -16,11 +23,21 @@ function ItemMenu({ menuIndex, innerMenuIndex, setMenuIndex, setInnerMenuIndex }
     const itemList = useSelector(state => state.game.items)
     const dispatch = useDispatch()
 
-    useImperativeHandle(ref, () => {
-        return {
-            ITEMFILTER: ITEMFILTER.length
+    const setMenuPosition = ($el) => {
+        if($el) $el.classList.add('show')
+    }
+
+    useEffect(() => {
+        if(enterPressed){
+            if(!innerMenuOpen){
+                // const itemList = store.getState().game.items
+                if(itemList[menuIndex - ITEMFILTER.length].type ===1) dispatch(setMenu({ type: 2, value: 1 }))
+            }else{
+                console.log(`use item`)
+            }
+            setEnterPressed(false)
         }
-    })
+    }, [enterPressed])
 
     useEffect(() => {
         setMenuIndex(menuIndex + ITEMFILTER.length)
@@ -28,8 +45,9 @@ function ItemMenu({ menuIndex, innerMenuIndex, setMenuIndex, setInnerMenuIndex }
 
     return(
         <div 
-            className={`menu sub_menu`} 
-            style={{ padding: `${(8 * Math.floor(scale * 10)) / 2}px`, fontSize: `${8 * (scale * 10)}px`}}>
+            className={`menu sub_menu hide`} 
+            style={{ padding: `${(8 * Math.floor(scale * 10)) / 2}px`, fontSize: `${8 * (scale * 10)}px`}}
+            ref={($el) => setMenuPosition($el)}>
             <div className="flex filter" style={{ boxShadow: pixelatedBorder(scale * 10, 'black') }}>
                 {
                     ITEMFILTER.map((filter, index) => (
