@@ -1,25 +1,32 @@
-import { playerPositionRef } from "../utils/ui"
-import { useEffect, useRef, useState } from "react";
+import { playerPositionRef, pixelatedBorder } from "../utils/ui"
+import { useEffect, useRef, useState, useImperativeHandle, forwardRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { pixelatedBorder } from '../utils/ui'
+import { setList, setMenu } from "../store/game";
 
 import MenuArrow from './menuArrow'
 
-export default function TeamMenu({
+const TeamMenu = forwardRef(({
     menuIndex, 
     innerMenuIndex,
     enterPressed,
     setEnterPressed,     
     setMenuIndex, 
     setInnerMenuIndex,    
-}){
+}, ref) => {
+    const menuOpen = useSelector(state => state.game.menuOpen)
     const gameWidth = useSelector(state => state.setting.width)
     const scale = useSelector(state => state.setting.scale)
+    const units = useSelector(state => state.game.units)  
     const [frontLine, setFrontLine] = useState([])
     const [backLine, setBackLine] = useState([])
-    const [selectedTarget, setSelectedTarget] = useState({})
+    const [selectedTarget, setSelectedTarget] = useState(-1)
     const dispatch = useDispatch()
     const menuRef = useRef(null)
+
+    useImperativeHandle(ref, () => ({
+        frontLine,
+        backLine
+    }))
 
     const setMenuPosition = ($el) => {
         if($el) $el.classList.add('show')
@@ -53,7 +60,7 @@ export default function TeamMenu({
                 console.log('arrow', arrow)
 
                 if(arrow){
-                    // Place the arrow at the center vertcally
+                    // Place the arrow at the center vertically
                     let times = 1
                     if(frontLine.length < backLine.length){
                         times = (index <= (frontLine.length - 1))? 
@@ -67,6 +74,66 @@ export default function TeamMenu({
                 }                   
             }            
         }
+    }
+
+    const setTarget = (index) => {
+        if(selectedTarget < 0){
+            setSelectedTarget(index)
+        }else{
+            // SWAPE
+            const copy = JSON.parse(JSON.stringify(units))
+            const firstUnit = copy[selectedTarget]
+            const target = copy[index]
+
+            copy[selectedTarget] = target
+            copy[selectedTarget].index = index
+            copy[index] = firstUnit
+            copy[index].index = selectedTarget
+
+            dispatch(setList({ type: 1, data: copy }))
+
+            // Reset value
+            setSelectedTarget(-1)
+        }
+    }
+
+    const changePosition = () => {
+        const newBackLine = frontLine.map(p => {
+            p[0] = 0.8
+            return p
+        })
+        const newFrontLine = backLine.map(p => {
+            p[0] = 0.7
+            return p
+        })
+
+        const frontUnits = []
+        const backUnits = []
+
+        frontLine.forEach((p, index) => {
+            const unit = units.find(u => u.index === index)
+            if(unit) frontUnits.push(JSON.parse(JSON.stringify(unit)))
+        })
+
+        backLine.forEach((p, index) => {
+            const unit = units.find(u => u.index === (index + frontLine.length))
+            if(unit) backUnits.push(JSON.parse(JSON.stringify(unit)))
+        })
+
+        const newFormation = newFrontLine.concat(newBackLine)
+        newFormation.forEach((p, index) => {
+            // Update playerPositionRef
+            playerPositionRef[index] = p
+        })
+    
+        const newTeam = backUnits.concat(frontUnits)
+        newTeam.forEach((u, index) => {
+            u.index = index
+        })
+    
+        setFrontLine(newFrontLine)
+        setBackLine(newBackLine)
+        dispatch(setList({ type: 1, data: newTeam }))
     }
 
     useEffect(() => {
@@ -91,7 +158,15 @@ export default function TeamMenu({
             }}>
             <div className="title" style={{ boxShadow: pixelatedBorder(scale * 10, 'black'), textAlign: 'center' }}>TEAM FORMATION</div>
             <div className="flex" style={{ flexDirection: 'row-reverse' }}>
-                <button style={{ margin: `${scale * 10}px 0`, color: 'black', backgroundColor: 'white', width: 'fit-content', boxShadow: pixelatedBorder(scale * 10, 'black'), }}>SWITCH</button>
+                <button style={{ 
+                    margin: `${scale * 10}px 0`, 
+                    color: 'black', 
+                    backgroundColor: 'white', 
+                    width: 'fit-content', 
+                    boxShadow: pixelatedBorder(scale * 10, 'black') 
+                }}
+                onClick={() => changePosition()}
+                >CHANGE</button>
             </div>
             <div className="pos" style={{ width: `${gameWidth / 5}px`, top: '40%', position: 'relative', margin: '0 auto', transform: 'translate(0, -40%) scale(5)' }}>
                 <div className="flex p-center" style={{ position: 'absolute' }}>
@@ -106,6 +181,7 @@ export default function TeamMenu({
                             key={index}
                             data-index={index}
                             onMouseOver={() => setMenuIndex(index)}
+                            onClick={() => setTarget(index)}
                             >
                                 { menuIndex === index ? 
                                     <span
@@ -128,7 +204,9 @@ export default function TeamMenu({
                                         width: '17px',
                                         height: '30px',
                                         backgroundSize: 'auto',
-                                    }}></div>                                  
+                                    }}>
+                                        { units[index].name }    
+                                    </div>                                  
                             </div>
                         )}                        
                     </div>
@@ -143,6 +221,7 @@ export default function TeamMenu({
                             data-index={index + frontLine.length}
                             key={index}
                             onMouseOver={() => setMenuIndex(index + frontLine.length)}
+                            onClick={() => setTarget(index + frontLine.length)}
                             >
                                 { menuIndex === (index + frontLine.length) ? 
                                     <span 
@@ -165,12 +244,31 @@ export default function TeamMenu({
                                         width: '17px',
                                         height: '30px',
                                         backgroundSize: 'auto',
-                                    }}></div>                                 
+                                    }}>
+                                        { units[index + frontLine.length].name }
+                                    </div>                                 
                             </div>
                         )}                        
                     </div>                        
                 </div>
             </div>
+            <div className="bottom">
+                <button style={{ 
+                    width: '100%', 
+                    backgroundColor: 'white', 
+                    margin: `${scale * 10}px 0`,
+                    color: 'black', 
+                    fontSize: `${8 * (scale * 10)}px` 
+                }} onClick={() => {
+                        // Close parent menu
+                        dispatch(
+                            setMenu({type: 1, value: 1})
+                        )                           
+                        setMenuIndex(menuOpen - 1)      
+                }}>BACK</button>
+            </div>       
         </div>
     )
-}
+});
+
+export default TeamMenu

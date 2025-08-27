@@ -30,6 +30,7 @@ export default function Menu() {
     // A shared state ref
     const menuIndexRef = useRef(0)
     const skillRef = useRef(null)
+    const teamRef = useRef(null)
 
     const dispath = useDispatch()
 
@@ -121,6 +122,21 @@ export default function Menu() {
                     }
                 }
                 if($event.key === 'Enter') setEnterPressed(true)    
+            break;
+            case 4: // TEAM
+                if(teamRef.current){
+                    const { frontLine, backLine } = teamRef.current
+                    if($event.key === 'ArrowUp') setMenuIndex(preState => preState === 0? 0 : preState - 1)
+                    if($event.key === 'ArrowDown') setMenuIndex(preState => 
+                        preState === (frontLine.length - 1) || preState === ((frontLine.length + backLine.length) - 1)? preState : preState + 1)         
+                    if($event.key === 'ArrowRight') setMenuIndex(preState => 
+                        (preState + frontLine.length) > ((frontLine.length + backLine.length) - 1)? (frontLine.length + backLine.length) - 1 : preState + frontLine.length
+                    )
+                    if($event.key === 'ArrowLeft') setMenuIndex(preState => 
+                        (preState - backLine.length) < 0? 0 : preState - backLine.length
+                    )  
+                    if($event.key === 'Enter') setEnterPressed(true)
+                }
             break;
             case 5: case 6: 
                 if($event.key === 'ArrowUp') setMenuIndex(preState => preState === 0? 0 : preState - 1)
@@ -277,7 +293,8 @@ export default function Menu() {
                     enterPressed={enterPressed}
                     setEnterPressed={setEnterPressed}                    
                     setMenuIndex={setMenuIndex}
-                    setInnerMenuIndex={setInnerMenuIndex}                 
+                    setInnerMenuIndex={setInnerMenuIndex}   
+                    ref={teamRef}              
                 /> : null
             }
             
