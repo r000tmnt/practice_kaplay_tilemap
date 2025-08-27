@@ -28,6 +28,7 @@ export default function Menu() {
 
     // A shared state ref
     const menuIndexRef = useRef(0)
+    const skillRef = useRef(null)
 
     const dispath = useDispatch()
 
@@ -94,7 +95,7 @@ export default function Menu() {
             break;
             case 3: // SKILL
                 if($event.key === 'ArrowUp'){
-                    if(store.getState().game.innerMenuOpen === 1){
+                    if(store.getState().game.innerMenuOpen < 2){
                         setMenuIndex(preState => (preState === 0)? 0 : preState - 1)
                         return
                     }else{
@@ -103,15 +104,18 @@ export default function Menu() {
                     }
                 }
                 if($event.key === 'ArrowDown'){
-                    if(store.getState().game.innerMenuOpen === 1){
+                    if(store.getState().game.innerMenuOpen === 0){
                         setMenuIndex(preState => (preState === (units.length - 1))? preState : preState + 1)
                         return
                     }                    
-                    if(store.getState().game.innerMenuOpen === 2){                        
-                        setInnerMenuIndex(preState => preState + 1)                        
+                    if(store.getState().game.innerMenuOpen === 1){   
+                        console.log('skillRef', skillRef.current)
+                        if(skillRef.current){
+                            setMenuIndex(preState => (preState < (skillRef.current.skill.length - 1))? preState + 1 : preState)
+                        }                                
                         return
                     }else{
-                        setMenuIndex(preState => (preState === (units.length - 1))? preState : preState + 1)
+                        setInnerMenuIndex(preState => (preState === (units.length - 1))? preState : preState + 1)
                         return                        
                     }
                 }
@@ -124,10 +128,11 @@ export default function Menu() {
         }
 
         if($event.key === 'Escape'){
-            if(store.getState().game.innerMenuOpen > 0){
+            const innerMenuOpen = store.getState().game.innerMenuOpen
+            if(innerMenuOpen > 0){
                 // CLose inner menu
                 setInnerMenuIndex(0)
-                dispath(setMenu({ type: 2, value: 0 }))
+                dispath(setMenu({ type: 2, value: innerMenuOpen - 1 }))
             }else{
                 // Close parent menu
                 store.dispatch(
@@ -258,7 +263,8 @@ export default function Menu() {
                     enterPressed={enterPressed}
                     setEnterPressed={setEnterPressed}                    
                     setMenuIndex={setMenuIndex}
-                    setInnerMenuIndex={setInnerMenuIndex}                 
+                    setInnerMenuIndex={setInnerMenuIndex}
+                    ref={skillRef}            
                 /> : null
             }        
 
