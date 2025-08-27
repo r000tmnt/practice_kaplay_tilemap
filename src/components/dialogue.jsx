@@ -9,7 +9,7 @@ export default function Dialogue(){
     const uiOffsetV = useSelector((state) => state.setting.uiOffsetV)
     // const gameWidth = useSelector((state) => state.setting.width)
     const gameHeight = useSelector((state) => state.setting.height)
-    // const scale = useSelector((state) => state.setting.scale)
+    const scale = useSelector((state) => state.setting.scale)
     const label = useSelector((state) => state.game.textLabel)
     const dialogue = useSelector(state => state.dialogue.dialogue)
     const name = useSelector(state => state.dialogue.name)
@@ -26,7 +26,7 @@ export default function Dialogue(){
         if($el){
             setTimeout(() => {
                 $el.style.bottom = 0
-            }, 25)
+            }, 5)
         }
     }
 
@@ -64,7 +64,10 @@ export default function Dialogue(){
             className='ui' style={{left: `${uiOffsetV}px`, height: `${gameHeight}px`}}>
             <div 
                 className='dialogue_wrapper' 
-                style={{ bottom: `-${gameHeight}px`}}
+                style={{ 
+                    bottom: `-${gameHeight}px`, 
+                    fontSize: `${8 * (scale * 10)}px`
+                }}
                 ref={($el) => setDialoguePosition($el)}
                 onClick={(e) => handleContinue(e)}  
             >
