@@ -61,7 +61,9 @@ function App() {
     scaleUI()        
 
     // Store player data
-    dispatch(setList({ type: 1, data: playerData }))
+    const units = JSON.parse(JSON.stringify(playerData))
+    units.forEach((p, index) => p.index = index)
+    dispatch(setList({ type: 1, data: units }))
 
     // Cleanup: Remove event listener on component unmount
     return () => {
