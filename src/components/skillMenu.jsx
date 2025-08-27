@@ -98,7 +98,7 @@ const SkillMenu = forwardRef(({
                             }
                         });
                     }}>
-                    { menuOpen === 3 && menuIndex === index? 
+                    { menuIndex === index? 
                         <span style={{ position: 'absolute', zIndex: 11 }}>
                             <MenuArrow /> 
                         </span>
@@ -136,7 +136,7 @@ const SkillMenu = forwardRef(({
                         onClick={() => {
                             // if(item.type === 1) dispatch(setMenu({ type: 2, value: 1 }))
                         }}>
-                        { menuOpen === 3 && menuIndex === index? 
+                        { menuIndex === index? 
                             <span style={{ position: 'absolute', zIndex: 11 }}>
                                 <MenuArrow /> 
                             </span> : null
@@ -175,7 +175,7 @@ const SkillMenu = forwardRef(({
                                         key={index} 
                                         onMouseOver={() => setInnerMenuIndex(index)}
                                         onClick={() => { console.log('use item') }}>
-                                        { menuOpen === 3 && innerMenuIndex === index? 
+                                        { innerMenuIndex === index? 
                                             <span style={{ position: 'absolute', zIndex: 11 }}>
                                                 <MenuArrow /> 
                                             </span>

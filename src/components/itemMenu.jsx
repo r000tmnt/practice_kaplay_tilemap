@@ -56,7 +56,7 @@ function ItemMenu({
                             key={index}
                             onMouseOver={() => setMenuIndex(index)} 
                             onClick={() => setFilter(filter)}>
-                            { menuOpen === 2 && menuIndex === index ? 
+                            { menuIndex === index ? 
                                 <MenuArrow /> : null
                             }
                             <span style={{ color: `${filter === activeFilter? 'black' : 'grey'}` }}>{filter}</span>
@@ -84,7 +84,7 @@ function ItemMenu({
                         onClick={() => {
                             if(item.type === 1) dispatch(setMenu({ type: 2, value: 1 }))
                         }}>
-                        { menuOpen === 2 && menuIndex === (index + ITEMFILTER.length)? 
+                        { menuIndex === (index + ITEMFILTER.length)? 
                             <MenuArrow /> : null
                         }                        
                         <div className="flex" style={{
@@ -115,7 +115,7 @@ function ItemMenu({
                                             key={index} 
                                             onMouseOver={() => setInnerMenuIndex(index)}
                                             onClick={() => { console.log('use item') }}>
-                                            { menuOpen === 2 && innerMenuIndex === index? 
+                                            { innerMenuIndex === index? 
                                                 <span style={{ position: 'absolute', zIndex: 11 }}>
                                                     <MenuArrow /> 
                                                 </span>
