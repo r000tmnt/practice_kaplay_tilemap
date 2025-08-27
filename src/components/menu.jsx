@@ -8,6 +8,7 @@ import { ITEMFILTER } from "../utils/ui"
 import MenuArrow from './menuArrow'
 import ItemMenu from "./itemMenu";
 import SkillMenu from "./skillMenu";
+import TeamMenu from "./teamMenu";
 
 const MEMUITEM = [
     'ITEM', 'SKILL', 'TEAM', 'STATUS', 'SAVE', 'LOAD', 'OPTION'
@@ -269,12 +270,16 @@ export default function Menu() {
             }        
 
             {/*  TEAM  */}
-            <div className={`menu sub_menu hide ${menuOpen === 4? 'show' : ''}`} style={{ padding: `${(8 * Math.floor(scale * 10)) / 2}px` }}>
-                <div className="pos">
-                    <div className="front"></div>
-                    <div className="back"></div>
-                </div>
-            </div>
+            { menuOpen === 4?
+                <TeamMenu
+                    menuIndex={menuIndex}
+                    innerMenuIndex={innerMenuIndex}
+                    enterPressed={enterPressed}
+                    setEnterPressed={setEnterPressed}                    
+                    setMenuIndex={setMenuIndex}
+                    setInnerMenuIndex={setInnerMenuIndex}                 
+                /> : null
+            }
             
             {/*  STATUS  */}
             <div className={`menu sub_menu_menu hide ${menuOpen === 5? 'show' : ''}`} style={{ padding: `${(8 * Math.floor(scale * 10)) / 2}px` }}>
