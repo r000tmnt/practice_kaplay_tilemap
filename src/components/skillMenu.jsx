@@ -1,19 +1,20 @@
 import { useSelector, useDispatch } from "react-redux"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useImperativeHandle, forwardRef } from "react"
 import { setMenu, setList } from '../store/game'
 import { pixelatedBorder } from '../utils/ui'
 import store from "../store/store";
 
 import MenuArrow from './menuArrow'
 
-function SkillMenu({ 
+// First and the second inner menu count as parent for the ease of use here
+const SkillMenu = forwardRef(({ 
     menuIndex, 
     innerMenuIndex,
     enterPressed,
     setEnterPressed,     
     setMenuIndex, 
     setInnerMenuIndex,
-}){
+}, ref) => {
     const menuOpen = useSelector(state => state.game.menuOpen)
     const innerMenuOpen = useSelector(state => state.game.innerMenuOpen)
     const gameWidth = useSelector(state => state.setting.width)
@@ -24,13 +25,17 @@ function SkillMenu({
     const [skill, setSkill] = useState([])
     const dispatch = useDispatch() 
 
+    useImperativeHandle(ref, () => ({
+        skill
+    }))
+
     const setMenuPosition = ($el) => {
         if($el) $el.classList.add('show')
     }
 
     useEffect(() => {
         if(enterPressed){
-            if(innerMenuOpen === 1){
+            if(innerMenuOpen === 0){
                 units[menuIndex].skill.forEach(id => {
                     const skillList = store.getState().game.skills
                     const data = skillList.find(s => s.id === id)
@@ -38,14 +43,15 @@ function SkillMenu({
                         setSkill(preState => [...preState, data])
                     }
                 });
-                dispatch(setMenu({ type: 2, value: 2 }))
+                dispatch(setMenu({ type: 2, value: 1 }))
                 setMenuIndex(0)
             }
-            if(innerMenuOpen === 2){
-                if(skill[innerMenuIndex].type === 'Support') dispatch(setMenu({ type: 2, value: 3 }))
+            if(innerMenuOpen === 1){
+                if(skill[menuIndex].type === 'Support') dispatch(setMenu({ type: 2, value: 2 }))
+                setInnerMenuIndex(0)
             }
-            if(innerMenuOpen === 3){
-                console.log(`use item`)
+            if(innerMenuOpen === 2){
+                console.log(`cast skill`)
             }
             setEnterPressed(false)
         }
@@ -53,7 +59,6 @@ function SkillMenu({
 
     useEffect(() => {
         setMenuIndex(0)
-        dispatch(setMenu({type: 2, value: 1}))
     }, [])
 
     return(
@@ -77,7 +82,7 @@ function SkillMenu({
                 }
             </div>
 
-            {  innerMenuOpen === 1?
+            {  innerMenuOpen === 0?
                 units.map((unit, index) => 
                 <div 
                     className="flex" 
@@ -114,9 +119,10 @@ function SkillMenu({
             }
 
             <div 
-                className={`flex flex-col hide ${innerMenuOpen > 1? 'show' : ''}`}
+                className={`flex flex-col`}
                 style={{
-                    paddingTop: scale * 10 + 'px'
+                    paddingTop: scale * 10 + 'px',
+                    display: innerMenuOpen > 0? 'block' : 'none'
                 }}>
                 {
                     skill.map((item, index) => 
@@ -160,7 +166,7 @@ function SkillMenu({
                     padding: `${scale * 10}px`,
                     boxSizing: 'border-box'
                 }}>
-                    { innerMenuOpen === 3? 
+                    { innerMenuOpen === 2? 
                         <div className="innerMenu">
                             <div className="flex flex-col">
                                 { units.map((unit, index) => 
@@ -169,7 +175,7 @@ function SkillMenu({
                                         key={index} 
                                         onMouseOver={() => setInnerMenuIndex(index)}
                                         onClick={() => { console.log('use item') }}>
-                                        { menuOpen === 3 && innerMenuIndex === (index + units.length)? 
+                                        { menuOpen === 3 && innerMenuIndex === index? 
                                             <span style={{ position: 'absolute', zIndex: 11 }}>
                                                 <MenuArrow /> 
                                             </span>
@@ -189,7 +195,7 @@ function SkillMenu({
                                     ) 
                                 }
                             </div>
-                        </div> : skill[innerMenuIndex]? skill[innerMenuIndex].desc : ''
+                        </div> : skill[menuIndex]? skill[menuIndex].desc : ''
                     }
                 </div>
                 <button style={{ 
@@ -215,6 +221,6 @@ function SkillMenu({
             </div>
         </div>        
     )
-};
+});
 
 export default SkillMenu
