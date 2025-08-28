@@ -5,6 +5,7 @@ import { pixelatedBorder } from '../utils/ui'
 import store from "../store/store";
 
 import MenuArrow from './menuArrow'
+import Sprite from './sprite'
 
 // First and the second inner menu count as parent for the ease of use here
 const SkillMenu = forwardRef(({ 
@@ -66,58 +67,72 @@ const SkillMenu = forwardRef(({
             className={`menu sub_menu hide`} 
             style={{ padding: `${(8 * Math.floor(scale * 10)) / 2}px`, fontSize: `${8 * (scale * 10)}px`}}
             ref={($el) => setMenuPosition($el)}>
-            <div className="flex filter" style={{ boxShadow: pixelatedBorder(scale * 10, 'black') }}>
-                { inspectingUnit >= 0?
-                    <div 
-                        className="flex w-full" 
-                        style={{
-                            whiteSpace: 'nowrap',
-                            justifyContent: 'space-around'
-                        }} >
-                        <div>{ units[inspectingUnit].name }</div>
+            <div className="title" style={{ boxShadow: pixelatedBorder(scale * 10, 'black'), textAlign: 'center' }}>SKILL</div>
+            <div className="flex" style={{margin: `${scale * 50}px 0 0 0 `, justifyContent: 'space-around'}}>
+                {
+                    inspectingUnit >= 0?
+                    <div className="flex w-full" 
+                    style={{
+                        whiteSpace: 'nowrap',
+                        justifyContent: 'space-around'
+                    }} >
+                        <div style={{width: `${17}px`, transform: 'scale(4)'}}>
+                            <Sprite 
+                                width={17} 
+                                height={30} 
+                                image={'/character/swordsman_spritesheet.png'}
+                                position={`-${(9 * 64) + 22}px -${(9 * 64) + 17}px`}
+                                custom={{
+                                    className: 'avatar'
+                                }}
+                            />                            
+                        </div>
+                        {/* <div>{ units[inspectingUnit].name }</div> */}
                         <div>HP {units[inspectingUnit].attribute.hp}/{units[inspectingUnit].attribute.maxHp}</div>
-                        <div>MP {units[inspectingUnit].attribute.mp}/{units[inspectingUnit].attribute.maxMp}</div>
-                    </div>   :
-                    'Whose skill to inspect?'
+                        <div>MP {units[inspectingUnit].attribute.mp}/{units[inspectingUnit].attribute.maxMp}</div>                                    
+                    </div> :
+                    units.map((unit, index) => 
+                        <div className="flex" key={index} style={{alignItems: 'center'}}>
+                            { innerMenuOpen === 0 && menuIndex === index ? 
+                                <span
+                                className="arrow" 
+                                style={{ 
+                                    position: 'relative', 
+                                    zIndex: 11,
+                                    left: `${(Math.abs(scale * 10) * -1)}px`
+                                }}>
+                                    <MenuArrow />
+                                </span> :
+                                <span style={{width: `${8 * Math.floor(scale * 10)}px`}}></span>
+                            }    
+                            <div style={{width: `${17}px`, transform: 'scale(4)'}}>
+                                <Sprite 
+                                    width={17} 
+                                    height={30} 
+                                    image={'/character/swordsman_spritesheet.png'}
+                                    position={`-${(9 * 64) + 22}px -${(9 * 64) + 17}px`}
+                                    custom={{ 
+                                        style: { position: 'unset' },
+                                        className: 'avatar',
+                                        onMouseOver: () => setMenuIndex(index),
+                                        onClick: () => {
+                                            setInspectingUnit(index)
+                                            dispatch(setMenu({type: 2, value: 1}))
+                                            unit.skill.forEach(id => {
+                                                const data = skillList.find(s => s.id === id)
+                                                if(data){
+                                                    setSkill(preState => [...preState, data])
+                                                }
+                                            });                                        
+                                        }
+                                    }}
+                                />                                
+                            </div>
+                        </div>
+                    )
                 }
             </div>
-
-            {  innerMenuOpen === 0?
-                units.map((unit, index) => 
-                <div 
-                    className="flex" 
-                    key={index} 
-                    onMouseOver={() => setMenuIndex(index)}
-                    onClick={() => {
-                        setInspectingUnit(index)
-                        dispatch(setMenu({type: 2, value: 2}))
-                        unit.skill.forEach(id => {
-                            const data = skillList.find(s => s.id === id)
-                            if(data){
-                                setSkill(preState => [...preState, data])
-                            }
-                        });
-                    }}>
-                    { menuIndex === index? 
-                        <span style={{ position: 'absolute', zIndex: 11 }}>
-                            <MenuArrow /> 
-                        </span>
-                        : null
-                    }                                                
-                    <div 
-                        className="flex w-full" 
-                        style={{
-                            whiteSpace: 'nowrap',
-                            justifyContent: 'space-around'
-                        }} >
-                        <div>{ unit.name }</div>
-                        <div>HP {unit.attribute.hp}/{unit.attribute.maxHp}</div>
-                        <div>MP {unit.attribute.mp}/{unit.attribute.maxMp}</div>
-                    </div>                                                
-                </div>
-                ) : null
-            }
-
+            
             <div 
                 className={`flex flex-col`}
                 style={{
@@ -134,9 +149,10 @@ const SkillMenu = forwardRef(({
                             setMenuIndex(index)
                         }}
                         onClick={() => {
-                            // if(item.type === 1) dispatch(setMenu({ type: 2, value: 1 }))
+                            if(skill[menuIndex].type === 'Support') dispatch(setMenu({ type: 2, value: 2 }))
+                            setInnerMenuIndex(0)
                         }}>
-                        { menuIndex === index? 
+                        { innerMenuOpen === 1 && menuIndex === index? 
                             <span style={{ position: 'absolute', zIndex: 11 }}>
                                 <MenuArrow /> 
                             </span> : null
@@ -205,10 +221,14 @@ const SkillMenu = forwardRef(({
                     color: 'black', 
                     fontSize: `${8 * (scale * 10)}px` 
                 }} onClick={() => {
-                    if(innerMenuIndex > 0){
+                    if(innerMenuOpen > 0){
                         // Close inner menu
-                        dispatch(setMenu({ type: 2, value: 0 }))
+                        dispatch(setMenu({ type: 2, value: innerMenuOpen - 1 }))
                         setInnerMenuIndex(0)
+                        if(innerMenuOpen === 1){
+                            setMenuIndex(inspectingUnit)
+                            setInspectingUnit(-1)
+                        }
                     }else{
                         // Close parent menu
                         dispatch(
