@@ -4,6 +4,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { setList, setMenu } from "../store/game";
 
 import MenuArrow from './menuArrow'
+import Sprite from './sprite'
 
 const TeamMenu = forwardRef(({
     menuIndex, 
@@ -182,7 +183,7 @@ const TeamMenu = forwardRef(({
                 fontSize: `${8 * (scale * 10)}px` 
             }}>
             <div className="title" style={{ boxShadow: pixelatedBorder(scale * 10, 'black'), textAlign: 'center' }}>TEAM FORMATION</div>
-            <div className="flex" style={{ margin: `${scale * 20}px 0 0 0`, justifyContent: 'space-around', alignItems: 'center' }}>
+            <div className="flex" style={{ margin: `${scale * 50}px 0 0 0`, justifyContent: 'space-around', alignItems: 'center' }}>
                 {
                     functions.map((f, index) => 
                         <div className="flex" key={index}>
@@ -199,8 +200,9 @@ const TeamMenu = forwardRef(({
                             }
                             <span style={{  
                                 color: 'black', 
-                                backgroundColor: 'white', 
                                 width: 'fit-content',
+                                background: '#F2F0EF',
+                                borderRadius: `${scale * 10}px`,
                                 cursor: 'pointer' 
                                 // boxShadow: pixelatedBorder(scale * 10, 'black') 
                             }}
@@ -237,19 +239,18 @@ const TeamMenu = forwardRef(({
                                         <MenuArrow />
                                     </span> : null
                                 }
-                                <div 
-                                    className="front"
-                                    style={{
-                                        position: 'absolute',
-                                        margin: `-10px 0 auto ${17 /4}px`,
-                                        backgroundImage: 'url("/character/swordsman_spritesheet.png")',
-                                        backgroundPosition: `-${(9 * 64) + 22}px -${(9 * 64) + 17}px`,
-                                        width: '17px',
-                                        height: '30px',
-                                        backgroundSize: 'auto',
-                                    }}>
-                                        { units[index].name }    
-                                    </div>                                  
+                                <Sprite 
+                                    width={17} 
+                                    height={30} 
+                                    image={'/character/swordsman_spritesheet.png'}
+                                    position={`-${(9 * 64) + 22}px -${(9 * 64) + 17}px`}
+                                    custom={{
+                                        style: {  margin: `-10px 0 auto ${17 /4}px` },
+                                        content: units[index].name,
+                                        onMouseOver: () => setMenuIndex(index + frontLine.length),
+                                        onClick: () => setTarget(index + frontLine.length)
+                                    }}
+                                />
                             </div>
                         )}                        
                     </div>
