@@ -125,20 +125,38 @@ export default function Menu() {
             break;
             case 4: // TEAM
                 if(teamRef.current){
-                    const { frontLine, backLine } = teamRef.current
-                    if($event.key === 'ArrowUp') setMenuIndex(preState => preState === 0? 0 : preState - 1)
-                    if($event.key === 'ArrowDown') setMenuIndex(preState => 
-                        preState === (frontLine.length - 1) || preState === ((frontLine.length + backLine.length) - 1)? preState : preState + 1)         
-                    if($event.key === 'ArrowRight') setMenuIndex(preState => 
-                        (preState + frontLine.length) > ((frontLine.length + backLine.length) - 1)? (frontLine.length + backLine.length) - 1 : preState + frontLine.length
-                    )
-                    if($event.key === 'ArrowLeft') setMenuIndex(preState => 
-                        (preState - backLine.length) < 0? 0 : preState - backLine.length
-                    )  
+                    const {  functions, frontLine, backLine } = teamRef.current
+                    if($event.key === 'ArrowUp'){
+                        setMenuIndex(preState => {
+                            if(preState === 0 || preState === frontLine.length) return -1
+                            return preState - 1
+                        })
+                    }
+                    if($event.key === 'ArrowDown'){
+                        setMenuIndex(preState => {
+                            if(preState < 0) return 0
+                            if(preState === (frontLine.length - 1) || preState === ((frontLine.length + backLine.length) - 1)) return preState
+                            else return preState + 1
+                        })   
+                    }      
+                    if($event.key === 'ArrowRight'){
+                        setMenuIndex(preState => {
+                            if(preState < 0 && preState > (Math.abs(functions.length) * -1)) return preState - 1
+                            if((preState + frontLine.length) > ((frontLine.length + backLine.length) - 1)) return (frontLine.length + backLine.length) - 1
+                            else return preState + frontLine.length 
+                        })
+                    }
+                    if($event.key === 'ArrowLeft'){
+                        setMenuIndex(preState => {
+                            if(preState < 0) return preState + 1
+                            if((preState - backLine.length) < 0) return 0
+                            else return preState - backLine.length
+                        })  
+                    }
                     if($event.key === 'Enter') setEnterPressed(true)
                 }
             break;
-            case 5: case 6: 
+            case 5: case 6: // SAVE, LOAD
                 if($event.key === 'ArrowUp') setMenuIndex(preState => preState === 0? 0 : preState - 1)
                 // if($event.key === 'ArrowDown') setMenuIndex(preState => preState === (MEMUITEM.length - 1)? MEMUITEM.length - 1 : preState + 1)
             break;

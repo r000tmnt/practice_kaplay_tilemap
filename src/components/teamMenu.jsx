@@ -204,6 +204,7 @@ const TeamMenu = forwardRef(({
                                 cursor: 'pointer' 
                                 // boxShadow: pixelatedBorder(scale * 10, 'black') 
                             }}
+                            onMouseOver={() => setMenuIndex(Math.abs(index + 1) * -1)}
                             onClick={() => f.fn()}
                             >{f.name}</span>                        
                         </div>
