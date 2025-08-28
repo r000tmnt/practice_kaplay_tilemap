@@ -48,7 +48,8 @@ function ItemMenu({
             className={`menu sub_menu hide`} 
             style={{ padding: `${(8 * Math.floor(scale * 10)) / 2}px`, fontSize: `${8 * (scale * 10)}px`}}
             ref={($el) => setMenuPosition($el)}>
-            <div className="flex filter" style={{ boxShadow: pixelatedBorder(scale * 10, 'black') }}>
+            <div className="title" style={{ boxShadow: pixelatedBorder(scale * 10, 'black'), textAlign: 'center' }}>ITEM</div>
+            <div className="flex filter" style={{ margin: `${scale * 50}px 0 0 0 `}}>
                 {
                     ITEMFILTER.map((filter, index) => (
                         <div 
@@ -57,9 +58,21 @@ function ItemMenu({
                             onMouseOver={() => setMenuIndex(index)} 
                             onClick={() => setFilter(filter)}>
                             { menuIndex === index ? 
-                                <MenuArrow /> : null
+                                <span 
+                                style={{ 
+                                    position: 'relative', 
+                                    zIndex: 11,
+                                    left: `${(Math.abs(scale * 10) * -1)}px`
+                                }}>
+                                    <MenuArrow />
+                                </span> : <span style={{width: `${8 * Math.floor(scale * 10)}px`}}></span>
                             }
-                            <span style={{ color: `${filter === activeFilter? 'black' : 'grey'}` }}>{filter}</span>
+                            <span style={{
+                                padding: `${scale * 10}px ${scale * 20}px`,
+                                background: '#F2F0EF',
+                                borderRadius: `${scale * 10}px`, 
+                                color: `${filter === activeFilter? 'black' : 'grey'}` 
+                            }}>{filter}</span>
                         </div>
                     ))
                 }
@@ -67,6 +80,7 @@ function ItemMenu({
             <div 
                 className="items"
                 style={{
+                     margin: `${scale * 50}px 0 0 0 `,
                     rowGap: scale * 10 + 'px',
                     columnGap: scale * 20 + 'px',
                     paddingTop: scale * 10 + 'px'
