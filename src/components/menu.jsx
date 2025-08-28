@@ -97,19 +97,16 @@ export default function Menu() {
             break;
             case 3: // SKILL
                 if($event.key === 'ArrowUp'){
-                    if(store.getState().game.innerMenuOpen < 2){
+                    if(store.getState().game.innerMenuOpen === 1){
                         setMenuIndex(preState => (preState === 0)? 0 : preState - 1)
                         return
-                    }else{
+                    }
+                    if(store.getState().game.innerMenuOpen === 2){
                         setInnerMenuIndex(preState => (preState === 0)? 0 : preState - 1)
                         return
                     }
                 }
-                if($event.key === 'ArrowDown'){
-                    if(store.getState().game.innerMenuOpen === 0){
-                        setMenuIndex(preState => (preState === (units.length - 1))? preState : preState + 1)
-                        return
-                    }                    
+                if($event.key === 'ArrowDown'){              
                     if(store.getState().game.innerMenuOpen === 1){   
                         console.log('skillRef', skillRef.current)
                         if(skillRef.current){
@@ -121,6 +118,12 @@ export default function Menu() {
                         return                        
                     }
                 }
+                if($event.key === 'ArrowRight'){
+                    if(store.getState().game.innerMenuOpen === 0) setMenuIndex(preState => (preState < (units.length - 1))? preState + 1 : preState)
+                }
+                if($event.key === 'ArrowLeft'){
+                    if(store.getState().game.innerMenuOpen === 0) setMenuIndex(preState => (preState === 0)? 0 : preState - 1)
+                }            
                 if($event.key === 'Enter') setEnterPressed(true)    
             break;
             case 4: // TEAM
@@ -260,7 +263,7 @@ export default function Menu() {
                                     className="menu-0 flex" 
                                     key={index}
                                     onMouseOver={() => setMenuIndex(index)}
-                                    onClick={() => dispath(setMenu(index + 2))}
+                                    onClick={() => dispath(setMenu({ type: 1, value: index + 2 }))}
                                 >
                                     { menuOpen === 1 && menuIndex === index? 
                                         <MenuArrow /> : null
