@@ -24,6 +24,7 @@ const TeamMenu = forwardRef(({
     const menuRef = useRef(null)
 
     useImperativeHandle(ref, () => ({
+        functions,
         frontLine,
         backLine
     }))
@@ -136,9 +137,33 @@ const TeamMenu = forwardRef(({
         dispatch(setList({ type: 1, data: newTeam }))
     }
 
+    const functions = [
+        {
+            name:'CHANGE',
+            fn: changePosition
+        }, 
+        {
+            name: 'FORMATION',
+            fn: () => { console.log('Select formation') }
+        }, 
+        {
+            name: 'CLEAR',
+            fn: () => { console.log('clear formation') }
+        }
+    ]    
+
+    useEffect(() => {
+        if(enterPressed){
+            if(menuIndex >= 0) setTarget(menuIndex)
+            else functions[Math.abs(menuIndex + 1) * 1].fn()
+            setEnterPressed(false)
+        }
+    }, [enterPressed])
+
+
     useEffect(() => {
         console.log('menuIndex updated', menuIndex)
-        setArrowPosition(menuIndex)
+        if(menuIndex >= 0) setArrowPosition(menuIndex)
     }, [menuIndex])
 
     useEffect(() => {
@@ -157,18 +182,35 @@ const TeamMenu = forwardRef(({
                 fontSize: `${8 * (scale * 10)}px` 
             }}>
             <div className="title" style={{ boxShadow: pixelatedBorder(scale * 10, 'black'), textAlign: 'center' }}>TEAM FORMATION</div>
-            <div className="flex" style={{ flexDirection: 'row-reverse' }}>
-                <button style={{ 
-                    margin: `${scale * 10}px 0`, 
-                    color: 'black', 
-                    backgroundColor: 'white', 
-                    width: 'fit-content', 
-                    boxShadow: pixelatedBorder(scale * 10, 'black') 
-                }}
-                onClick={() => changePosition()}
-                >CHANGE</button>
+            <div className="flex" style={{ margin: `${scale * 20}px 0 0 0`, justifyContent: 'space-around', alignItems: 'center' }}>
+                {
+                    functions.map((f, index) => 
+                        <div className="flex" key={index}>
+                            { menuIndex === (Math.abs(index + 1) * -1) ? 
+                                <span
+                                className="arrow" 
+                                style={{ 
+                                    position: 'relative', 
+                                    zIndex: 11,
+                                    left: `${(Math.abs(scale * 10) * -1)}px`
+                                }}>
+                                    <MenuArrow />
+                                </span> : <span style={{width: `${8 * Math.floor(scale * 10)}px`}}></span>
+                            }
+                            <span style={{  
+                                color: 'black', 
+                                backgroundColor: 'white', 
+                                width: 'fit-content',
+                                cursor: 'pointer' 
+                                // boxShadow: pixelatedBorder(scale * 10, 'black') 
+                            }}
+                            onClick={() => f.fn()}
+                            >{f.name}</span>                        
+                        </div>
+                    )
+                }
             </div>
-            <div className="pos" style={{ width: `${gameWidth / 5}px`, top: '40%', position: 'relative', margin: '0 auto', transform: 'translate(0, -40%) scale(5)' }}>
+            <div className="pos" style={{ width: `${gameWidth / 5}px`, top: '40%', position: 'relative', margin: '0 auto', transform: 'translate(0, -40%) scale(4)' }}>
                 <div className="flex p-center" style={{ position: 'absolute' }}>
                     <div style={{ height: 'fit-content', margin: 'auto 0' }}>
                         { frontLine.map((pos, index) =>
@@ -176,7 +218,7 @@ const TeamMenu = forwardRef(({
                                 width: `${17 + 10}px`, 
                                 height: `${17 + 10}px`,
                                 margin: `${17 + 10}px 0`,
-                                background: 'lightgrey'
+                                background: (selectedTarget === index)? 'yellow' : 'lightgrey',
                             }}
                             key={index}
                             data-index={index}
@@ -189,7 +231,7 @@ const TeamMenu = forwardRef(({
                                     style={{ 
                                         position: 'absolute', 
                                         zIndex: 11, 
-                                        transform: 'scale(0.2)', 
+                                        transform: 'scale(0.25)', 
                                     }}>
                                         <MenuArrow />
                                     </span> : null
@@ -216,7 +258,7 @@ const TeamMenu = forwardRef(({
                                 width: `${17 + 10}px`, 
                                 height: `${17 + 10}px`,
                                 margin: `${17 + 10}px 0`,
-                                background: 'lightgrey'
+                                background:  (selectedTarget === ( index + frontLine.length))? 'yellow' : 'lightgrey',
                             }}
                             data-index={index + frontLine.length}
                             key={index}
@@ -229,7 +271,7 @@ const TeamMenu = forwardRef(({
                                     style={{ 
                                         position: 'absolute', 
                                         zIndex: 11, 
-                                        transform: 'scale(0.2)', 
+                                        transform: 'scale(0.25)', 
                                     }}>
                                         <MenuArrow />
                                     </span> : null
