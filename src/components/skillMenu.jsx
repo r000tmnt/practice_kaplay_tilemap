@@ -26,24 +26,33 @@ const SkillMenu = forwardRef(({
     const [skill, setSkill] = useState([])
     const dispatch = useDispatch() 
 
-    useImperativeHandle(ref, () => ({
-        skill
-    }))
-
     const setMenuPosition = ($el) => {
         if($el) $el.classList.add('show')
+    }
+
+    const getUnitSkillList = (index) => {
+        console.log(units[index])
+        if(units[index]){
+            const list = []
+            units[index].skill.forEach(id => {
+                const skillList = store.getState().game.skills
+                const data = skillList.find(s => s.id === id)
+                if(data) list.push(data)
+            });
+
+            setSkill(list)
+        }
+    }
+
+    const reset = () => {
+        setMenuIndex(inspectingUnit)
+        setInspectingUnit(-1)
     }
 
     useEffect(() => {
         if(enterPressed){
             if(innerMenuOpen === 0){
-                units[menuIndex].skill.forEach(id => {
-                    const skillList = store.getState().game.skills
-                    const data = skillList.find(s => s.id === id)
-                    if(data){
-                        setSkill(preState => [...preState, data])
-                    }
-                });
+                setInspectingUnit(menuIndex)
                 dispatch(setMenu({ type: 2, value: 1 }))
                 setMenuIndex(0)
             }
@@ -56,11 +65,17 @@ const SkillMenu = forwardRef(({
             }
             setEnterPressed(false)
         }
-    }, [enterPressed])    
-
+    }, [enterPressed])  
+    
     useEffect(() => {
-        setMenuIndex(0)
-    }, [])
+        // console.log('menuIndex updated!', menuIndex)
+        if(inspectingUnit < 0) getUnitSkillList(menuIndex)
+    }, [menuIndex])
+
+    useImperativeHandle(ref, () => ({
+        skill,
+        reset
+    }))    
 
     return(
         <div 
@@ -68,14 +83,10 @@ const SkillMenu = forwardRef(({
             style={{ padding: `${(8 * Math.floor(scale * 10)) / 2}px`, fontSize: `${8 * (scale * 10)}px`}}
             ref={($el) => setMenuPosition($el)}>
             <div className="title" style={{ boxShadow: pixelatedBorder(scale * 10, 'black'), textAlign: 'center' }}>SKILL</div>
-            <div className="flex" style={{margin: `${scale * 50}px 0 0 0 `, justifyContent: 'space-around'}}>
+            <div className="flex" style={{margin: `${scale * 100}px 0`, justifyContent: 'space-around'}}>
                 {
-                    inspectingUnit >= 0?
-                    <div className="flex w-full" 
-                    style={{
-                        whiteSpace: 'nowrap',
-                        justifyContent: 'space-around'
-                    }} >
+                    inspectingUnit >= 0? 
+                    <>
                         <div style={{width: `${17}px`, transform: 'scale(4)'}}>
                             <Sprite 
                                 width={17} 
@@ -83,16 +94,18 @@ const SkillMenu = forwardRef(({
                                 image={'/character/swordsman_spritesheet.png'}
                                 position={`-${(9 * 64) + 22}px -${(9 * 64) + 17}px`}
                                 custom={{
+                                    style: { position: 'unset' },
                                     className: 'avatar'
                                 }}
                             />                            
                         </div>
                         {/* <div>{ units[inspectingUnit].name }</div> */}
                         <div>HP {units[inspectingUnit].attribute.hp}/{units[inspectingUnit].attribute.maxHp}</div>
-                        <div>MP {units[inspectingUnit].attribute.mp}/{units[inspectingUnit].attribute.maxMp}</div>                                    
-                    </div> :
+                        <div>MP {units[inspectingUnit].attribute.mp}/{units[inspectingUnit].attribute.maxMp}</div>                        
+                    </>
+                    :
                     units.map((unit, index) => 
-                        <div className="flex" key={index} style={{alignItems: 'center'}}>
+                        <div className="flex" key={index}>
                             { innerMenuOpen === 0 && menuIndex === index ? 
                                 <span
                                 className="arrow" 
@@ -136,8 +149,10 @@ const SkillMenu = forwardRef(({
             <div 
                 className={`flex flex-col`}
                 style={{
-                    paddingTop: scale * 10 + 'px',
-                    display: innerMenuOpen > 0? 'block' : 'none'
+                    boxShadow: pixelatedBorder(scale * 10, 'black'), 
+                    padding: `${scale * 10}px`,
+                    boxSizing: 'border-box',
+                    display: skill.length? 'block' : 'none'
                 }}>
                 {
                     skill.map((item, index) => 
@@ -145,14 +160,14 @@ const SkillMenu = forwardRef(({
                         className="skill flex" 
                         key={index}
                         onMouseOver={() => {
-                            if(innerMenuOpen > 0) return
+                            if(inspectingUnit < 0) return
                             setMenuIndex(index)
                         }}
                         onClick={() => {
                             if(skill[menuIndex].type === 'Support') dispatch(setMenu({ type: 2, value: 2 }))
                             setInnerMenuIndex(0)
                         }}>
-                        { innerMenuOpen === 1 && menuIndex === index? 
+                        { inspectingUnit >= 0 && menuIndex === index? 
                             <span style={{ position: 'absolute', zIndex: 11 }}>
                                 <MenuArrow /> 
                             </span> : null
@@ -225,10 +240,7 @@ const SkillMenu = forwardRef(({
                         // Close inner menu
                         dispatch(setMenu({ type: 2, value: innerMenuOpen - 1 }))
                         setInnerMenuIndex(0)
-                        if(innerMenuOpen === 1){
-                            setMenuIndex(inspectingUnit)
-                            setInspectingUnit(-1)
-                        }
+                        if(innerMenuOpen === 1) reset()
                     }else{
                         // Close parent menu
                         dispatch(
