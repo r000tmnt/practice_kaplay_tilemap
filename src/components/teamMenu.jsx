@@ -17,7 +17,7 @@ const TeamMenu = forwardRef(({
     const menuOpen = useSelector(state => state.game.menuOpen)
     const gameWidth = useSelector(state => state.setting.width)
     const scale = useSelector(state => state.setting.scale)
-    const units = useSelector(state => state.game.units)  
+    const units = useSelector(state => state.game.units)
     const [frontLine, setFrontLine] = useState([])
     const [backLine, setBackLine] = useState([])
     const [selectedTarget, setSelectedTarget] = useState(-1)
@@ -183,7 +183,7 @@ const TeamMenu = forwardRef(({
                 fontSize: `${8 * (scale * 10)}px` 
             }}>
             <div className="title" style={{ boxShadow: pixelatedBorder(scale * 10, 'black'), textAlign: 'center' }}>TEAM FORMATION</div>
-            <div className="flex" style={{ margin: `${scale * 50}px 0 0 0`, justifyContent: 'space-around', alignItems: 'center' }}>
+            <div className="flex" style={{ margin: `${scale * 50}px 0 0 0`, justifyContent: 'space-around' }}>
                 {
                     functions.map((f, index) => 
                         <div className="flex" key={index}>
