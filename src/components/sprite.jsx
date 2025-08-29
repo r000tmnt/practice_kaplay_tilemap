@@ -47,8 +47,14 @@ export default function Sprite({
         <div 
         className={`sprite ${className}`}
         style={customStyle}
-        onMouseOver={() => onMouseOver?? onMouseOver()}
-        onClick={() => onClick?? onClick()}
+        onMouseOver={() => {
+            console.log('sprite onMouseOver')
+            if(onMouseOver) onMouseOver()
+        }}
+        onClick={() => {
+            console.log('sprite onClick')
+            if(onClick) onClick()
+        }}
         >
             { content }    
         </div> 
