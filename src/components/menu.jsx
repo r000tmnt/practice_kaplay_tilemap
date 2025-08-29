@@ -23,6 +23,7 @@ export default function Menu() {
     // const uiOffsetH = useSelector(state => state.setting.uiOffsetH) 
     const units = useSelector(state => state.game.units)  
     const inventory = useSelector(state => state.game.inventory)
+    const skillList = useSelector(state => state.game.skills)
     const [menuIndex, setMenuIndex] = useState(0)
     const [innerMenuIndex, setInnerMenuIndex] = useState(0)
     const [enterPressed, setEnterPressed] = useState(false)
@@ -96,35 +97,35 @@ export default function Menu() {
                 if($event.key === 'Enter') setEnterPressed(true)
             break;
             case 3: // SKILL
-                if($event.key === 'ArrowUp'){
-                    if(store.getState().game.innerMenuOpen === 1){
-                        setMenuIndex(preState => (preState === 0)? 0 : preState - 1)
-                        return
+                console.log('skillRef', skillRef.current)
+                if(skillRef.current){
+                    if($event.key === 'ArrowUp'){
+                        if(store.getState().game.innerMenuOpen === 1){
+                            setMenuIndex(preState => (preState === 0)? 0 : preState - 1)
+                            return
+                        }
+                        if(store.getState().game.innerMenuOpen === 2){
+                            setInnerMenuIndex(preState => (preState === 0)? 0 : preState - 1)
+                            return
+                        }
                     }
-                    if(store.getState().game.innerMenuOpen === 2){
-                        setInnerMenuIndex(preState => (preState === 0)? 0 : preState - 1)
-                        return
+                    if($event.key === 'ArrowDown'){              
+                        if(store.getState().game.innerMenuOpen === 1){   
+                            setMenuIndex(preState => (preState < (skillRef.current.skill.length - 1))? preState + 1 : preState)                             
+                            return
+                        }else{
+                            setInnerMenuIndex(preState => (preState === (units.length - 1))? preState : preState + 1)
+                            return                        
+                        }
                     }
-                }
-                if($event.key === 'ArrowDown'){              
-                    if(store.getState().game.innerMenuOpen === 1){   
-                        console.log('skillRef', skillRef.current)
-                        if(skillRef.current){
-                            setMenuIndex(preState => (preState < (skillRef.current.skill.length - 1))? preState + 1 : preState)
-                        }                                
-                        return
-                    }else{
-                        setInnerMenuIndex(preState => (preState === (units.length - 1))? preState : preState + 1)
-                        return                        
+                    if($event.key === 'ArrowRight'){
+                        if(store.getState().game.innerMenuOpen === 0) setMenuIndex(preState => (preState < (units.length - 1))? preState + 1 : preState)
                     }
+                    if($event.key === 'ArrowLeft'){
+                        if(store.getState().game.innerMenuOpen === 0) setMenuIndex(preState => (preState === 0)? 0 : preState - 1)
+                    }            
+                    if($event.key === 'Enter') setEnterPressed(true)    
                 }
-                if($event.key === 'ArrowRight'){
-                    if(store.getState().game.innerMenuOpen === 0) setMenuIndex(preState => (preState < (units.length - 1))? preState + 1 : preState)
-                }
-                if($event.key === 'ArrowLeft'){
-                    if(store.getState().game.innerMenuOpen === 0) setMenuIndex(preState => (preState === 0)? 0 : preState - 1)
-                }            
-                if($event.key === 'Enter') setEnterPressed(true)    
             break;
             case 4: // TEAM
                 if(teamRef.current){
@@ -171,6 +172,7 @@ export default function Menu() {
                 // CLose inner menu
                 setInnerMenuIndex(0)
                 dispath(setMenu({ type: 2, value: innerMenuOpen - 1 }))
+                if(innerMenuOpen === 1 && menuOpen === 3) skillRef.current?.reset()
             }else{
                 // Close parent menu
                 store.dispatch(
@@ -212,6 +214,7 @@ export default function Menu() {
                 import('../data/skill.json').then(data => {
                     console.log(data)
                     dispath(setList({ type: 3, data: data.default }))
+                    setMenuIndex(0)
                 })                
             break;       
             case 6:
@@ -294,7 +297,7 @@ export default function Menu() {
             }
 
             {/*  SKILL  */}
-            { menuOpen === 3? 
+            { menuOpen === 3 && skillList.length? 
                 <SkillMenu
                     menuIndex={menuIndex}
                     innerMenuIndex={innerMenuIndex}
