@@ -9,6 +9,7 @@ import MenuArrow from './menuArrow'
 import ItemMenu from "./itemMenu";
 import SkillMenu from "./skillMenu";
 import TeamMenu from "./teamMenu";
+import StatusMenu from "./statusMenu";
 
 const MEMUITEM = [
     'ITEM', 'SKILL', 'TEAM', 'STATUS', 'SAVE', 'LOAD', 'OPTION'
@@ -42,6 +43,7 @@ export default function Menu() {
             // console.log(parentEl)
             $el.style.left = `${(parentEl.clientWidth - $el.clientWidth) - Math.floor(scale * 10)}px`
             if(menuOpen === 1) $el.classList.add('show')
+            else $el.classList.remove('show')
         }
     }
 
@@ -88,11 +90,13 @@ export default function Menu() {
                 }
                 if($event.key === 'ArrowRight'){
                     if(store.getState().game.innerMenuOpen > 0) return
-                    setMenuIndex(preState => preState + 1)
+                    const itemList = store.getState().game.items
+                    setMenuIndex(preState => preState === (ITEMFILTER.length + (itemList.length - 1))? preState : 
+                    ((preState + 2) % 2) === 0? preState + 1 : preState)
                 }
                 if($event.key === 'ArrowLeft'){
                     if(store.getState().game.innerMenuOpen > 0) return
-                    setMenuIndex(preState => preState === 0? 0 : preState - 1)
+                    setMenuIndex(preState => ((preState + 2) % 2) > 0? preState - 1 : preState)
                 }
                 if($event.key === 'Enter') setEnterPressed(true)
             break;
@@ -160,9 +164,29 @@ export default function Menu() {
                     if($event.key === 'Enter') setEnterPressed(true)
                 }
             break;
-            case 5: case 6: // SAVE, LOAD
+            case 5: // STATUS
+                if(store.getState().game.innerMenuOpen === 1){
+                    const equipment = Object.entries(units[menuIndexRef.current].equip).length
+                    if($event.key === 'ArrowUp') setInnerMenuIndex(preState => (preState === 0 || preState === 1)? preState : preState - 2)
+                    if($event.key === 'ArrowDown') setInnerMenuIndex(preState => (preState + 2 > (equipment - 1))? equipment - 1 : preState + 2)   
+                    if($event.key === 'ArrowLeft') setInnerMenuIndex(preState => (preState % 2) > 0? preState - 1 : preState)
+                    if($event.key === 'ArrowRight') setInnerMenuIndex(preState => preState === (equipment - 1)? preState : (preState % 2) === 0? preState + 1 : preState)                         
+                }
+
+                if(store.getState().game.innerMenuOpen === 2){
+                    // TODO - Select item to equip
+                }
+                if(store.getState().game.innerMenuOpen === 0){
+                    if($event.key === 'ArrowLeft') setMenuIndex(preState => (preState === 0)? 0 : preState - 1)
+                    if($event.key === 'ArrowRight') setMenuIndex(preState => (preState === (units.length - 1))? preState : preState + 1) 
+                }
+                if($event.key === 'Enter') setEnterPressed(true)            
+            break; 
+            case 6: case 7: // SAVE, LOAD
                 if($event.key === 'ArrowUp') setMenuIndex(preState => preState === 0? 0 : preState - 1)
                 // if($event.key === 'ArrowDown') setMenuIndex(preState => preState === (MEMUITEM.length - 1)? MEMUITEM.length - 1 : preState + 1)
+            break;
+            case 8:
             break;
         }
 
@@ -187,10 +211,10 @@ export default function Menu() {
         console.log('menuOpen updated', menuOpen)
 
         switch(menuOpen){
-            case 1:
+            case 1: // SYSTEM
                 setMenuIndex(0)
             break;
-            case 2:
+            case 2: // ITEM
                 import('../data/items.json').then(data => {
                     console.log(data)
                     const items = []
@@ -210,18 +234,21 @@ export default function Menu() {
                     )                 
                 })
             break;
-            case 3:
+            case 3: // SKILL
                 import('../data/skill.json').then(data => {
                     console.log(data)
                     dispath(setList({ type: 3, data: data.default }))
                     setMenuIndex(0)
                 })                
-            break;       
-            case 6:
+            break;  
+            case 5: // STATUS
+                setMenuIndex(0)
             break;
-            case 7:
+            case 6: // SAVE
             break;
-            case 8:
+            case 7: // LOAD
+            break;
+            case 8: // OPTION
             break;                                      
         }
     }, [menuOpen])
@@ -323,12 +350,16 @@ export default function Menu() {
             }
             
             {/*  STATUS  */}
-            <div className={`menu sub_menu_menu hide ${menuOpen === 5? 'show' : ''}`} style={{ padding: `${(8 * Math.floor(scale * 10)) / 2}px` }}>
-                <div className="flex">
-                    <img className="avatar"></img>
-                </div>
-                <div className="status items"></div>
-            </div>
+            { menuOpen === 5? 
+                <StatusMenu
+                    menuIndex={menuIndex}
+                    innerMenuIndex={innerMenuIndex}
+                    enterPressed={enterPressed}
+                    setEnterPressed={setEnterPressed}                    
+                    setMenuIndex={setMenuIndex}
+                    setInnerMenuIndex={setInnerMenuIndex}                    
+                /> : null
+            }
             
             {/*  SAVE  */}
             <div className={`menu sub_menu hide ${menuOpen === 6? 'show' : ''}`} style={{ padding: `${(8 * Math.floor(scale * 10)) / 2}px` }}>

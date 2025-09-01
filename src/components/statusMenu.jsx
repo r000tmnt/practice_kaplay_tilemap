@@ -4,6 +4,7 @@ import { pixelatedBorder } from "../utils/ui"
 
 import MenuArrow from "./menuArrow"
 import Sprite from "./sprite"
+import { useEffect } from "react"
 
 export default function StatusMenu({ 
     menuIndex, 
@@ -23,6 +24,14 @@ export default function StatusMenu({
     const setMenuPosition = ($el) => {
         if($el) $el.classList.add('show')
     }    
+
+    useEffect(() => {
+        if(innerMenuOpen === 0){
+            dispatch(setMenu({type: 2, value: 1}))
+            setInnerMenuIndex(0)
+        }
+        setEnterPressed(false)
+    }, [enterPressed])
 
     return(
         <div 
@@ -136,6 +145,9 @@ export default function StatusMenu({
             </div>
 
             <div className="bottom">
+                {innerMenuOpen > 0 && innerMenuIndex >= 0?
+                    <></> : <></>
+                }
                 <button style={{ 
                     width: '100%', 
                     backgroundColor: 'white', 
@@ -143,11 +155,11 @@ export default function StatusMenu({
                     color: 'black', 
                     fontSize: `${8 * (scale * 10)}px` 
                 }} onClick={() => {
-                        // Close parent menu
-                        dispatch(
-                            setMenu({type: 1, value: 1})
-                        )                           
-                        setMenuIndex(menuOpen - 1)      
+                    // Close parent menu
+                    dispatch(
+                        setMenu({type: 1, value: 1})
+                    )                           
+                    setMenuIndex(menuOpen - 1)      
                 }}>BACK</button>
             </div>                
         </div>
