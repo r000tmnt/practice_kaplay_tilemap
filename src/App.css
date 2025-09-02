@@ -104,6 +104,12 @@ body {
 .items{
   display: grid;
   grid-template-columns: 1fr 1fr;
+  /* calc(var(--width) * 1px) */
+  padding: calc(var(--scale) * 10px);
+  box-sizing: 'border-box';
+  row-gap: calc(var(--scale) * 10px);
+  column-gap: calc(var(--scale) * 20px);
+  padding-top: calc(var(--scale) * 10px);  
 }
 
 .dialogue_wrapper{

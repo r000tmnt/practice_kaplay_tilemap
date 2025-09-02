@@ -81,9 +81,6 @@ function ItemMenu({
                 className="items"
                 style={{
                      margin: `${scale * 50}px 0 0 0 `,
-                    rowGap: scale * 10 + 'px',
-                    columnGap: scale * 20 + 'px',
-                    paddingTop: scale * 10 + 'px'
                 }}>
                 {
                     itemList.map((item, index) => 
