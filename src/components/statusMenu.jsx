@@ -26,11 +26,13 @@ export default function StatusMenu({
     }    
 
     useEffect(() => {
-        if(innerMenuOpen === 0){
-            dispatch(setMenu({type: 2, value: 1}))
-            setInnerMenuIndex(0)
+        if(enterPressed){
+            if(innerMenuOpen === 0){
+                dispatch(setMenu({type: 2, value: 1}))
+                setInnerMenuIndex(0)
+            }
+            setEnterPressed(false)            
         }
-        setEnterPressed(false)
     }, [enterPressed])
 
     return(
@@ -66,10 +68,14 @@ export default function StatusMenu({
                                     custom={{
                                         style: { position: 'unset' },
                                         className: 'avatar',
-                                        onMouseOver: () => setMenuIndex(index),
+                                        onMouseOver: () => {
+                                            if(innerMenuOpen === 0) setMenuIndex(index)
+                                        },
                                         onClick: () => {
-                                            dispatch(setMenu({type: 2, value: 1}))
-                                            setInnerMenuIndex(0)
+                                            if(innerMenuOpen === 0){
+                                                dispatch(setMenu({type: 2, value: 1}))
+                                                setInnerMenuIndex(0)                                                
+                                            }
                                         }
                                     }}
                                 />                            
@@ -128,7 +134,10 @@ export default function StatusMenu({
                                     style={{ 
                                         position: 'absolute', 
                                         zIndex: 11,
-                                        left: `${(Math.abs(scale * 10) * -1)}px`
+                                        left: `${(index % 2) === 0? 
+                                            (Math.abs(scale * 10) * -1) + (gameWidth * 0.2 * 0) :
+                                            (Math.abs(scale * 10) * -1) + (gameWidth * 0.2 * 2.4)
+                                        }px`
                                     }}>
                                         <MenuArrow />
                                     </span> : null
