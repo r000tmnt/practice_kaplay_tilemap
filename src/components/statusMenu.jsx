@@ -1,10 +1,11 @@
 import { useSelector, useDispatch } from "react-redux"
 import { setMenu } from "../store/game"
 import { pixelatedBorder } from "../utils/ui"
+import { setList } from '../store/game'
 
 import MenuArrow from "./menuArrow"
 import Sprite from "./sprite"
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 
 export default function StatusMenu({ 
     menuIndex, 
@@ -15,10 +16,14 @@ export default function StatusMenu({
     setInnerMenuIndex,    
  }){
     const gameWidth = useSelector(state => state.setting.width)
+    const gameHeight = useSelector(state => state.setting.height)
     const scale = useSelector(state => state.setting.scale)
     const units = useSelector(state => state.game.units)
     const menuOpen = useSelector(state => state.game.menuOpen)
     const innerMenuOpen = useSelector(state => state.game.innerMenuOpen)
+    const inventory = useSelector(state => state.game.inventory)
+    const itemList = useSelector(state => state.game.items)
+    const [inspectingUnit, setInspectingUnit] = useState(-1)
     const dispatch = useDispatch()
 
     const setMenuPosition = ($el) => {
@@ -26,10 +31,41 @@ export default function StatusMenu({
     }    
 
     useEffect(() => {
+        if(innerMenuOpen === 0) setInspectingUnit(-1)
+    }, [innerMenuOpen])
+
+    useEffect(() => {
         if(enterPressed){
             if(innerMenuOpen === 0){
                 dispatch(setMenu({type: 2, value: 1}))
+                setInspectingUnit(menuIndex)
+                setMenuIndex(0)
+            }
+            if(innerMenuOpen === 1){
+                dispatch(setMenu({type: 2, value: 2}))
                 setInnerMenuIndex(0)
+                // TODO - Filter item
+                if(!itemList.length){
+                    import('../data/items.json').then(data => {
+                        console.log(data)
+                        const items = []
+                        for(const item of inventory){
+                            const itemData = data.default.find(d => d.id === item.id)
+                            if(itemData.stackable){
+                                itemData.amount = item.amount
+                            }else{
+                                itemData.amount = 1
+                            }
+                            items.push(itemData)
+                        }
+                        dispatch(
+                            setList({ type: 2, data: items })
+                        )                 
+                    })                    
+                }
+            }
+            if(innerMenuOpen === 2){
+                // TODO - Equip item
             }
             setEnterPressed(false)            
         }
@@ -44,8 +80,21 @@ export default function StatusMenu({
                 fontSize: `${8 * (scale * 10)}px`  
             }}>
             <div className="title" style={{ boxShadow: pixelatedBorder(scale * 10, 'black'), textAlign: 'center' }}>STATUS</div>
-            <div className="flex" style={{margin: `${scale * 100}px 0`, justifyContent: 'space-around'}}>
+            <div className="flex" style={{margin: `${scale * 100}px 0`, justifyContent: 'space-around', height: `${30 * 2}px`}}>
                 {
+                    inspectingUnit >= 0? 
+                    <div style={{width: `${17}px`, transform: 'scale(4)'}}>
+                        <Sprite 
+                            width={17} 
+                            height={30} 
+                            image={'/character/swordsman_spritesheet.png'}
+                            position={`-${(9 * 64) + 22}px -${(9 * 64) + 17}px`}
+                            custom={{
+                                style: { position: 'unset' },
+                                className: 'avatar'
+                            }}
+                        />                            
+                    </div> :
                     units.map((unit, index) => 
                         <div className="flex" key={index}>
                             { menuIndex === index ? 
@@ -118,7 +167,8 @@ export default function StatusMenu({
                             <div 
                                 style={{
                                     display: 'grid',
-                                    gridTemplateColumns: `${gameWidth * 0.2}px 1fr`
+                                    gridTemplateColumns: `${gameWidth * 0.2}px 1fr`,
+                                    boxShadow: (innerMenuOpen === 2 && menuIndex === index)? pixelatedBorder(scale * 5, 'grey') : 'unset',
                                 }} 
                                 key={index}
                                 onMouseOver={() => {
@@ -128,7 +178,7 @@ export default function StatusMenu({
                                     if(innerMenuOpen > 0) console.log('open item sub menu')
                                 }}
                             >
-                                { innerMenuOpen > 0 && innerMenuIndex === index ? 
+                                { innerMenuOpen === 1 && menuIndex === index ? 
                                     <span
                                     className="arrow" 
                                     style={{ 
@@ -154,8 +204,36 @@ export default function StatusMenu({
             </div>
 
             <div className="bottom">
-                {innerMenuOpen > 0 && innerMenuIndex >= 0?
-                    <></> : <></>
+                {innerMenuOpen === 2?
+                    <div className="items" style={{ 
+                        boxShadow: pixelatedBorder(scale * 10, 'black'), 
+                        fontSize: `${8 * (scale * 10)}px`,
+                        height: `${gameHeight * 0.24}px`,
+                    }}>
+                        {
+                            itemList.filter(item => item.type === (menuIndex + 5)).map((item, index) =>
+                                <div 
+                                    className="item flex" 
+                                    key={index} 
+                                    style={{ height: '33%', }}
+                                    onMouseOver={() => {
+                                    }}
+                                    onClick={() => {
+                                    }}>
+                                        {innerMenuOpen === 2 && innerMenuIndex === index? 
+                                            <MenuArrow /> : null
+                                        }                        
+                                        <div className="" style={{
+                                            width: `${gameWidth * 0.3}px`,
+                                            marginLeft: 'auto',
+                                        }}>
+                                            <span>{ item.name }</span>
+                                            {/* <span style={{ marginLeft: 'auto' }}>{ item.amount }</span>                                 */}
+                                        </div>
+                                </div>
+                            )
+                        }
+                    </div> : null
                 }
                 <button style={{ 
                     width: '100%', 

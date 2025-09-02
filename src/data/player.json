@@ -1,5 +1,6 @@
 [
     {
+        "Lv": 1,
         "name": "P1",
         "attribute": {
             "hp": 50,
@@ -17,9 +18,17 @@
             "status": ""
         },
         "skill": [1, 2, 3, 4, 14, 16],
-        "action": ""
+        "action": "",
+        "equip": {
+            "head": {},
+            "body": {},
+            "feet": {},
+            "hand": {},
+            "accessory": {}
+        }        
     },
     {
+        "Lv": 1,
         "name": "P2",
         "attribute": {
             "hp": 30,
@@ -37,9 +46,17 @@
             "status": ""
         },
         "skill": [3, 4, 9, 10, 11, 15],
-        "action": ""
+        "action": "",
+        "equip": {
+            "head": {},
+            "body": {},
+            "feet": {},
+            "hand": {},
+            "accessory": {}
+        }
     },
     {
+        "Lv": 1,
         "name": "P3",
         "attribute": {
             "hp": 70,
@@ -57,9 +74,17 @@
             "status": ""
         },
         "skill": [1, 2, 3, 4, 5, 6],
-        "action": ""
+        "action": "",
+        "equip": {
+            "head": {},
+            "body": {},
+            "feet": {},
+            "hand": {},
+            "accessory": {}
+        }
     },
     {
+        "Lv": 1,
         "name": "P4",
         "attribute": {
             "hp": 35,
@@ -77,9 +102,17 @@
             "status": ""
         },
         "skill": [1, 2, 4, 7, 8, 14],
-        "action": ""
+        "action": "",
+        "equip": {
+            "head": {},
+            "body": {},
+            "feet": {},
+            "hand": {},
+            "accessory": {}
+        }
     },
     {
+        "Lv": 1,
         "name": "P5",
         "attribute": {
             "hp": 40,
@@ -97,6 +130,13 @@
             "status": ""
         },
         "skill": [1, 4, 9, 10, 12, 17, 18],
-        "action": ""
+        "action": "",
+        "equip": {
+            "head": {},
+            "body": {},
+            "feet": {},
+            "hand": {},
+            "accessory": {}
+        }
     }
 ]

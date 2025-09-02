@@ -167,13 +167,13 @@ export default function Menu() {
             case 5: // STATUS
                 if(store.getState().game.innerMenuOpen === 1){
                     const equipment = Object.entries(units[menuIndexRef.current].equip).length
-                    if($event.key === 'ArrowUp') setInnerMenuIndex(preState => (preState === 0 || preState === 1)? preState : preState - 2)
-                    if($event.key === 'ArrowDown') setInnerMenuIndex(preState => (preState + 2 > (equipment - 1))? equipment - 1 : preState + 2)   
-                    if($event.key === 'ArrowLeft') setInnerMenuIndex(preState => {
+                    if($event.key === 'ArrowUp') setMenuIndex(preState => (preState === 0 || preState === 1)? preState : preState - 2)
+                    if($event.key === 'ArrowDown') setMenuIndex(preState => (preState + 2 > (equipment - 1))? equipment - 1 : preState + 2)   
+                    if($event.key === 'ArrowLeft') setMenuIndex(preState => {
                         const remain = preState % 2
                         return (remain > 0)? preState - 1 : preState
                     })
-                    if($event.key === 'ArrowRight') setInnerMenuIndex(preState => {
+                    if($event.key === 'ArrowRight') setMenuIndex(preState => {
                         console.log(preState % 2)
                         const remain = preState % 2
                         return preState === (equipment - 1)? preState : (remain === 0)? preState + 1 : preState
