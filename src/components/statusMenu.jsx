@@ -30,6 +30,30 @@ export default function StatusMenu({
         if($el) $el.classList.add('show')
     }    
 
+    const setItemList = () => {
+        dispatch(setMenu({type: 2, value: 2}))
+        setInnerMenuIndex(0)
+        // TODO - Filter item
+        if(!itemList.length){
+            import('../data/items.json').then(data => {
+                console.log(data)
+                const items = []
+                for(const item of inventory){
+                    const itemData = data.default.find(d => d.id === item.id)
+                    if(itemData.stackable){
+                        itemData.amount = item.amount
+                    }else{
+                        itemData.amount = 1
+                    }
+                    items.push(itemData)
+                }
+                dispatch(
+                    setList({ type: 2, data: items })
+                )                 
+            })                    
+        }        
+    }
+
     useEffect(() => {
         if(innerMenuOpen === 0) setInspectingUnit(-1)
     }, [innerMenuOpen])
@@ -42,27 +66,7 @@ export default function StatusMenu({
                 setMenuIndex(0)
             }
             if(innerMenuOpen === 1){
-                dispatch(setMenu({type: 2, value: 2}))
-                setInnerMenuIndex(0)
-                // TODO - Filter item
-                if(!itemList.length){
-                    import('../data/items.json').then(data => {
-                        console.log(data)
-                        const items = []
-                        for(const item of inventory){
-                            const itemData = data.default.find(d => d.id === item.id)
-                            if(itemData.stackable){
-                                itemData.amount = item.amount
-                            }else{
-                                itemData.amount = 1
-                            }
-                            items.push(itemData)
-                        }
-                        dispatch(
-                            setList({ type: 2, data: items })
-                        )                 
-                    })                    
-                }
+                setItemList()
             }
             if(innerMenuOpen === 2){
                 // TODO - Equip item
@@ -123,7 +127,8 @@ export default function StatusMenu({
                                         onClick: () => {
                                             if(innerMenuOpen === 0){
                                                 dispatch(setMenu({type: 2, value: 1}))
-                                                setInnerMenuIndex(0)                                                
+                                                setInspectingUnit(index)
+                                                setMenuIndex(0)                                                
                                             }
                                         }
                                     }}
@@ -172,10 +177,10 @@ export default function StatusMenu({
                                 }} 
                                 key={index}
                                 onMouseOver={() => {
-                                    if(innerMenuOpen > 0) setInnerMenuIndex(index)
+                                    if(innerMenuOpen === 1) setMenuIndex(index)
                                 }}
                                 onClick={() => {
-                                    if(innerMenuOpen > 0) console.log('open item sub menu')
+                                    if(innerMenuOpen === 1) setItemList()
                                 }}
                             >
                                 { innerMenuOpen === 1 && menuIndex === index ? 
@@ -209,13 +214,13 @@ export default function StatusMenu({
                         boxShadow: pixelatedBorder(scale * 10, 'black'), 
                         fontSize: `${8 * (scale * 10)}px`,
                         height: `${gameHeight * 0.24}px`,
+                        overflowY: 'scroll',
                     }}>
                         {
                             itemList.filter(item => item.type === (menuIndex + 5)).map((item, index) =>
                                 <div 
                                     className="item flex" 
-                                    key={index} 
-                                    style={{ height: '33%', }}
+                                    key={index}
                                     onMouseOver={() => {
                                     }}
                                     onClick={() => {
@@ -242,11 +247,18 @@ export default function StatusMenu({
                     color: 'black', 
                     fontSize: `${8 * (scale * 10)}px` 
                 }} onClick={() => {
-                    // Close parent menu
-                    dispatch(
-                        setMenu({type: 1, value: 1})
-                    )                           
-                    setMenuIndex(menuOpen - 1)      
+                    if(innerMenuOpen === 0){
+                        // Close parent menu
+                        dispatch(
+                            setMenu({type: 1, value: 1})
+                        )                           
+                        setMenuIndex(menuOpen - 1)                            
+                    }else{
+                        dispatch(
+                            setMenu({type: 2, value: innerMenuOpen - 1})
+                        )
+                        setInnerMenuIndex(0)
+                    }
                 }}>BACK</button>
             </div>                
         </div>
