@@ -10,6 +10,7 @@ import ItemMenu from "./itemMenu";
 import SkillMenu from "./skillMenu";
 import TeamMenu from "./teamMenu";
 import StatusMenu from "./statusMenu";
+import FileMenu from "./fileMenu";
 
 const MEMUITEM = [
     'ITEM', 'SKILL', 'TEAM', 'STATUS', 'SAVE', 'LOAD', 'OPTION'
@@ -25,6 +26,7 @@ export default function Menu() {
     const units = useSelector(state => state.game.units)  
     const inventory = useSelector(state => state.game.inventory)
     const skillList = useSelector(state => state.game.skills)
+    const saveSlot = useSelector(state => state.setting.saveSlot)
     const [menuIndex, setMenuIndex] = useState(0)
     const [innerMenuIndex, setInnerMenuIndex] = useState(0)
     const [enterPressed, setEnterPressed] = useState(false)
@@ -191,7 +193,8 @@ export default function Menu() {
             break; 
             case 6: case 7: // SAVE, LOAD
                 if($event.key === 'ArrowUp') setMenuIndex(preState => preState === 0? 0 : preState - 1)
-                // if($event.key === 'ArrowDown') setMenuIndex(preState => preState === (MEMUITEM.length - 1)? MEMUITEM.length - 1 : preState + 1)
+                if($event.key === 'ArrowDown') setMenuIndex(preState => preState === (saveSlot - 1)? preState : preState + 1)
+                if($event.key === 'Enter') setEnterPressed(true)    
             break;
             case 8:
             break;
@@ -219,6 +222,10 @@ export default function Menu() {
 
         switch(menuOpen){
             case 1: // SYSTEM
+            case 5: // STATUS
+            case 6: // SAVE
+            case 7: // LOAD
+            case 8: // OPTION            
                 setMenuIndex(0)
             break;
             case 2: // ITEM
@@ -247,16 +254,7 @@ export default function Menu() {
                     dispath(setList({ type: 3, data: data.default }))
                     setMenuIndex(0)
                 })                
-            break;  
-            case 5: // STATUS
-                setMenuIndex(0)
-            break;
-            case 6: // SAVE
-            break;
-            case 7: // LOAD
-            break;
-            case 8: // OPTION
-            break;                                      
+            break;                                   
         }
     }, [menuOpen])
 
@@ -369,26 +367,16 @@ export default function Menu() {
             }
             
             {/*  SAVE  */}
-            <div className={`menu sub_menu hide ${menuOpen === 6? 'show' : ''}`} style={{ padding: `${(8 * Math.floor(scale * 10)) / 2}px` }}>
-                <ul>
-                    <li></li>
-                    <li></li>
-                    <li></li>
-                    <li></li>
-                    <li></li>
-                </ul>
-            </div>
-
             {/*  LOAD  */}
-            <div className={`menu sub_menu hide ${menuOpen === 7? 'show' : ''}`} style={{ padding: `${(8 * Math.floor(scale * 10)) / 2}px` }}>
-                <ul>
-                    <li></li>
-                    <li></li>
-                    <li></li>
-                    <li></li>
-                    <li></li>                    
-                </ul>
-            </div>
+            { menuOpen === 6 || menuOpen === 7?
+                <FileMenu 
+                    mode={menuOpen}
+                    menuIndex={menuIndex}
+                    setMenuIndex={setMenuIndex}
+                    enterPressed={enterPressed}
+                    setEnterPressed={setEnterPressed}                         
+                /> : null
+            }
 
             {/*  OPTION  */}
             <div className={`menu sub_menu hide ${menuOpen === 8? 'show' : ''}`} style={{ padding: `${(8 * Math.floor(scale * 10)) / 2}px` }}></div>
