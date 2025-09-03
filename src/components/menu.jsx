@@ -11,6 +11,7 @@ import SkillMenu from "./skillMenu";
 import TeamMenu from "./teamMenu";
 import StatusMenu from "./statusMenu";
 import FileMenu from "./fileMenu";
+import OptionMenu from "./optionMenu";
 
 const MEMUITEM = [
     'ITEM', 'SKILL', 'TEAM', 'STATUS', 'SAVE', 'LOAD', 'OPTION'
@@ -379,7 +380,10 @@ export default function Menu() {
             }
 
             {/*  OPTION  */}
-            <div className={`menu sub_menu hide ${menuOpen === 8? 'show' : ''}`} style={{ padding: `${(8 * Math.floor(scale * 10)) / 2}px` }}></div>
+            { menuOpen === 8?
+                <OptionMenu 
+                /> : null
+            }
         </div>
     )
 }
