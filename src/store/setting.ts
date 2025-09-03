@@ -8,6 +8,7 @@ const settingSlice = createSlice({
         scale: 0,
         uiOffsetV: 0,
         uiOffsetH: 0,
+        saveSlot: 5,
     },
     reducers : {
         setScale: (state, action) => {
