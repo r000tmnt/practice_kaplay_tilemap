@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { pixelatedBorder } from '../utils/ui'
 import { setMenu, setList } from "../store/game"
 import store from "../store/store";
-import { ITEMFILTER } from "../utils/ui"
+import { ITEMFILTER, LANGUAGELIST } from "../utils/ui"
 
 import MenuArrow from './menuArrow'
 import ItemMenu from "./itemMenu";
@@ -36,6 +36,7 @@ export default function Menu() {
     const menuIndexRef = useRef(0)
     const skillRef = useRef(null)
     const teamRef = useRef(null)
+    const optionRef = useRef(null)
 
     const dispath = useDispatch()
 
@@ -198,6 +199,39 @@ export default function Menu() {
                 if($event.key === 'Enter') setEnterPressed(true)    
             break;
             case 8:
+                if(optionRef.current){
+                    const { options } = optionRef.current
+
+                    if($event.key === 'ArrowUp') 
+                        setMenuIndex(preState => {
+                            if(preState === 0) return preState
+
+                            if(preState > 1) return 1
+                            else return preState - 1
+                        })
+
+                    if($event.key === 'ArrowDown')
+                        setMenuIndex(preState => {
+                            if(preState < 2) return preState +1
+                            else return preState
+                        })                      
+                        
+                    if($event.key === 'ArrowRight'){
+                        if(menuIndexRef === 0 && options[0].value < 100) options[0].set(options[0].value + 1)
+                        if(menuIndexRef === 1 && options[1].value < 100) options[1].set(options[1].value + 1)
+                        else{
+                            if(menuIndex < (LANGUAGELIST.length + 1)) setMenuIndex(preState => preState + 1)
+                        }
+                    }
+
+                    if($event.key === 'ArrowLeft'){
+                        if(menuIndexRef === 0 && options[0].value > 0) options[0].set(options[0].value - 1)
+                        if(menuIndexRef === 1 && options[1].value > 0) options[1].set(options[1].value - 1)
+                        else{
+                            if(menuIndex < (LANGUAGELIST.length + 1)) setMenuIndex(preState => preState - 1)
+                        }
+                    }
+                }
             break;
         }
 
@@ -382,6 +416,11 @@ export default function Menu() {
             {/*  OPTION  */}
             { menuOpen === 8?
                 <OptionMenu 
+                    menuIndex={menuIndex}
+                    setMenuIndex={setMenuIndex}
+                    enterPressed={enterPressed}
+                    setEnterPressed={setEnterPressed}
+                    ref={optionRef}
                 /> : null
             }
         </div>
