@@ -11,6 +11,8 @@ import { createPlayerSprite } from '../utils/player';
 const {
     add,
     pos, 
+    drawCurve,
+    evaluateBezier,
     sprite,   
     rotate,
     setData,
@@ -66,9 +68,10 @@ export default function initGame(){
 
         loadSprite('arrow', 'ui/arrow.png')
 
-        loadFont('bebasNeue_regular', 'font/BebasNeue-Regular.ttf', { outline: 4 })
+        loadFont('bebasNeue_regular', 'font/BebasNeue-Regular.ttf', { outline: 0 })
 
         loadShaderURL("fadeTransition", null, 'shaders/fade_transition.frag')
+        loadShaderURL("mosaicTransition", null, 'shaders/mosaic_transition.frag')
 
         setData('ready', false)
         
@@ -87,7 +90,7 @@ const setMap = async(name: string) => {
     }
 
     const mapData = await (await fetch(`bg/${name}.json`)).json()
-    map = add([pos(0, 0), "map"])
+    map = add([pos(0, 0), opacity(1), "map"],)
 
     const { width, height, tilewidth } = mapData
 
@@ -218,6 +221,34 @@ const setMap = async(name: string) => {
         }
     }    
 
+    // const halfTileWidth = tilewidth / 2
+
+    //     const path = [
+    //         [halfTileWidth, halfTileWidth + 4],
+    //         [halfTileWidth + 1, halfTileWidth + 10],
+    //         [halfTileWidth + 5, halfTileWidth + 14],
+    //         [halfTileWidth + 10, halfTileWidth + 16],
+    //         [halfTileWidth + 12, halfTileWidth + 18],
+    //     ]
+
+    //     map.add([
+    //         pos(0, 0),
+    //         {
+    //             draw(){
+    //                 drawCurve( t => evaluateBezier(
+    //                     vec2(path[0][0], path[0][1]),
+    //                     vec2(path[1][0], path[1][1]),
+    //                     vec2(path[2][0], path[2][1]),
+    //                     vec2(path[3][0], path[3][1]),
+    //                     t),
+    //                     {
+    //                         segments: 4,
+    //                         width: 2
+    //                     }
+    //                 )  
+    //             }
+    //         }
+    //     ])
     console.log(map)    
 }
 

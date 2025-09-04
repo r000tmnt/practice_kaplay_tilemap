@@ -2,7 +2,12 @@ import k from '../lib/kaplay'
 import { GameObj } from "kaplay";
 
 import store from '../store/store';
-import { setMenu, setTextLabel } from '../store/game';
+import { 
+    setMenu, 
+    setTextLabel, 
+    setLastKnownPosition,
+    setEncounter
+} from '../store/game';
 import { collidedObjs } from '../scene/game';
 
 const { 
@@ -13,10 +18,10 @@ const {
     body,
     pos,
     Rect,
-    // rect,
-    // color,
-    // bezier,
-    // text,
+    loop,
+    wait,
+    color,
+    add,
     vec2,
     getData,
     setData,
@@ -63,8 +68,9 @@ export const createPlayerSprite = (map: GameObj, x: number, y: number, mapWidth:
         const menuOpen = store.getState().game.menuOpen
         const label = store.getState().game.textLabel
         const dialogue = store.getState().dialogue.dialogue
+        const encounter = store.getState().game.encounter
 
-        if(menuOpen > 0 || label.length || dialogue.length) return
+        if(menuOpen > 0 || label.length || dialogue.length || encounter) return
 
         if(!isKeyDown()){
             player.stop()
@@ -123,6 +129,12 @@ export const createPlayerSprite = (map: GameObj, x: number, y: number, mapWidth:
 
     onUpdate(() => {
         if(!getData('ready', false)) return
+
+        const encounter = store.getState().game.encounter
+        const label = store.getState().game.textLabel
+        const dialogue = store.getState().dialogue.dialogue
+
+        if(label.length || dialogue.length || encounter) return
 
         if (isKeyPressed('escape')){
             console.log('escape key pressed')
@@ -459,6 +471,89 @@ const checkStep = (player: GameObj) => {
 
         if(rng <= rate){
             console.log('Battle encounter!')
+
+            player.stop()
+
+            store.dispatch(
+                setEncounter(true)
+            )
+
+            store.dispatch(
+                setLastKnownPosition({ x: player.pos.x, y: player.pos.y })
+            )
+
+            const scale = store.getState().setting.scale
+            let progress = 0
+
+            const map = get('map')[0]
+            const mapArrows = map.get('arrow')
+
+            // Pause moving objects
+            mapArrows.forEach(arrow => {
+                arrow.timer.paused = true
+            })
+
+            tween(
+                progress,
+                1,
+                0.3,
+                (v) => {
+                    usePostEffect('mosaicTransition', () => ({
+                        'u_progress': v,
+                        'u_block_size': Math.round(scale * 100)
+                    }))
+                    progress = v
+                },
+                easings.easeInOutBack
+            ).onEnd(() => {
+                // Black out full screen
+                wait(0.3, () => {
+                    usePostEffect('fadeTransition', () => ({ 'u_progress': 1 }))
+                }).onEnd(() => {
+                    // Resume map
+                    wait(1, () => {
+                        usePostEffect('fadeTransition', () => ({ 'u_progress': 0 }))
+                    }).onEnd(() => {
+                        // Gradually restore screen
+                        const steps = [0.75, 0.5, 0.25, 0]
+                        let count = 0
+                        loop(0.1, () => {
+                            tween(
+                                progress,
+                                steps[count],
+                                0.3,
+                                (v) => {
+                                    console.log(v)
+                                    usePostEffect('mosaicTransition', () => ({
+                                        'u_progress': v,
+                                        'u_block_size': Math.round(scale * 100)
+                                    }))
+                                    progress = v
+                                    count += 1
+                                },
+                                easings.easeInOutBack
+                            )
+                        }, 4).onEnd(() => {
+                            if(progress !== 0){
+                                usePostEffect('mosaicTransition', () => ({
+                                    'u_progress': 0,
+                                    'u_block_size': Math.round(scale * 100)
+                                }))
+                            }
+                            store.dispatch(
+                                setEncounter(false)
+                            )
+
+                            mapArrows.forEach(arrow => {
+                                arrow.timer.paused = false
+                            })
+
+                            console.log('done')
+                        })                        
+                    })
+
+                })
+            })
         }
 
         player.step = 0

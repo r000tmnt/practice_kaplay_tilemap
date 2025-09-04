@@ -13,7 +13,9 @@ const gameSlice = createSlice({
             { id: 1, amount: 5 },
             { id: 2, amount: 5 },
             { id: 3, amount: 5 },
-        ] as { id: number, amount: number }[],        
+        ] as { id: number, amount: number }[],
+        encounter: false,
+        lastKnownPosition: {} as { x: number, y: number }
     },
     reducers : {
         setMenu: (state, action) => {
@@ -44,12 +46,18 @@ const gameSlice = createSlice({
         },
         setInventory: (state, action) => {
             state.inventory = action.payload
-        },        
+        },
+        setEncounter: (state, action) => {
+            state.encounter = action.payload
+        },
+        setLastKnownPosition: (state, action) => {
+            state.lastKnownPosition = action.payload
+        }
     }
 })
 
 export const { 
     setMenu, setTextLabel, setList,
-    setInventory,
+    setInventory, setEncounter, setLastKnownPosition
 } = gameSlice.actions
 export default gameSlice.reducer
