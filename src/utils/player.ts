@@ -459,6 +459,33 @@ const InteractWithObject = (object: GameObj) => {
 //     }    
 // }
 
+const restoreFromMosaic = (progress: number, next: number, callBack: Function) => {
+    const scale = store.getState().setting.scale
+
+    const timer = tween(
+        progress,
+        next,
+        0.3,
+        (v) => {
+            console.log(v)
+            usePostEffect('mosaicTransition', () => ({
+                'u_progress': v,
+                'u_block_size': Math.round(scale * 100)
+            }))
+            progress = v
+        },
+        easings.easeInOutBack
+    )
+
+    timer.onEnd(() => {
+        if(progress > 0){
+            restoreFromMosaic(progress, progress - 0.25, callBack)
+        }else{
+            callBack()
+        }
+    })
+}
+
 const checkStep = (player: GameObj) => {
     // setCamPos(player.pos)
     player.step += 1
@@ -514,32 +541,7 @@ const checkStep = (player: GameObj) => {
                     wait(1, () => {
                         usePostEffect('fadeTransition', () => ({ 'u_progress': 0 }))
                     }).onEnd(() => {
-                        // Gradually restore screen
-                        const steps = [0.75, 0.5, 0.25, 0]
-                        let count = 0
-                        loop(0.1, () => {
-                            tween(
-                                progress,
-                                steps[count],
-                                0.3,
-                                (v) => {
-                                    console.log(v)
-                                    usePostEffect('mosaicTransition', () => ({
-                                        'u_progress': v,
-                                        'u_block_size': Math.round(scale * 100)
-                                    }))
-                                    progress = v
-                                    count += 1
-                                },
-                                easings.easeInOutBack
-                            )
-                        }, 4).onEnd(() => {
-                            if(progress !== 0){
-                                usePostEffect('mosaicTransition', () => ({
-                                    'u_progress': 0,
-                                    'u_block_size': Math.round(scale * 100)
-                                }))
-                            }
+                        restoreFromMosaic(progress, 0.75, () => {
                             store.dispatch(
                                 setEncounter(false)
                             )
@@ -549,9 +551,8 @@ const checkStep = (player: GameObj) => {
                             })
 
                             console.log('done')
-                        })                        
+                        })
                     })
-
                 })
             })
         }
