@@ -72,6 +72,7 @@ export default function initGame(){
 
         loadShaderURL("fadeTransition", null, 'shaders/fade_transition.frag')
         loadShaderURL("mosaicTransition", null, 'shaders/mosaic_transition.frag')
+        loadShaderURL("splitTransition", null, 'shaders/split_transition.frag')
 
         setData('ready', false)
         
