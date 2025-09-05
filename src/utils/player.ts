@@ -34,6 +34,10 @@ const {
     usePostEffect,
 } = k
 
+const shaders = [
+    'mosaicTransition' , 'splitTransition'
+]
+
 export const createPlayerSprite = (map: GameObj, x: number, y: number, mapWidth: number, mapHeight: number, direction=8) => {
     const player = map.add([
         sprite("player", { 
@@ -523,35 +527,66 @@ const checkStep = (player: GameObj) => {
             tween(
                 progress,
                 1,
-                0.3,
+                1.5,
                 (v) => {
-                    usePostEffect('mosaicTransition', () => ({
+                    // usePostEffect('mosaicTransition', () => ({
+                    //     'u_progress': v,
+                    //     'u_block_size': Math.round(scale * 100)
+                    // }))
+                    usePostEffect('splitTransition', () => ({
                         'u_progress': v,
-                        'u_block_size': Math.round(scale * 100)
-                    }))
+                        'u_direction':0
+                    }))     
+                    // usePostEffect('clockwiseTransition', () => ({
+                    //     'u_progress': v,
+                    //     'u_direction': 0
+                    // }))                                        
                     progress = v
                 },
                 easings.easeInOutBack
             ).onEnd(() => {
                 // Black out full screen
                 wait(0.3, () => {
-                    usePostEffect('fadeTransition', () => ({ 'u_progress': 1 }))
+                    // usePostEffect('fadeTransition', () => ({ 'u_progress': 1 }))
                 }).onEnd(() => {
                     // Resume map
-                    wait(1, () => {
-                        usePostEffect('fadeTransition', () => ({ 'u_progress': 0 }))
-                    }).onEnd(() => {
-                        restoreFromMosaic(progress, 0.75, () => {
-                            store.dispatch(
-                                setEncounter(false)
-                            )
+                    // wait(1, () => {
+                        // usePostEffect('fadeTransition', () => ({ 'u_progress': 0 }))
+                    // }).onEnd(() => {
+                        // restoreFromMosaic(progress, 0.75, () => {
+                        //     store.dispatch(
+                        //         setEncounter(false)
+                        //     )
 
-                            mapArrows.forEach(arrow => {
-                                arrow.timer.paused = false
-                            })
+                        //     mapArrows.forEach(arrow => {
+                        //         arrow.timer.paused = false
+                        //     })
 
-                            console.log('done')
+                        //     console.log('done')
+                        // })
+                    // })
+
+                    tween(
+                        progress,
+                        0,
+                        1.5,
+                        (v) => {
+                            // usePostEffect('fadeTransition', () => ({ 'u_progress': v }))
+                            // usePostEffect('clockwiseTransition', () => ({
+                            //     'u_progress': v,
+                            //     'u_direction': 1
+                            // }))             
+                        }
+                    ).onEnd(() => {
+                        store.dispatch(
+                            setEncounter(false)
+                        )
+
+                        mapArrows.forEach(arrow => {
+                            arrow.timer.paused = false
                         })
+
+                        console.log('done')                        
                     })
                 })
             })
